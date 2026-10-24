@@ -6,8 +6,8 @@ import { interpretarJSON } from "./llm";
 
 // O modelo lê a descrição livre e devolve título, prioridade e uma versão organizada do relato.
 // O roteiro, a aprovação do texto e o registro são código (lib/fluxo.ts).
-// O prompt de sistema é o INSTRUCTIONS.md da raiz, sem alterações.
-const SISTEMA = fs.readFileSync(path.join(process.cwd(), "INSTRUCTIONS.md"), "utf8");
+// O prompt de sistema é o INSTRUCTIONS/INSTRUCTIONS.md, sem alterações.
+const SISTEMA = fs.readFileSync(path.join(process.cwd(), "INSTRUCTIONS", "INSTRUCTIONS.md"), "utf8");
 
 const Classificacao = z.object({
   titulo: z.string().min(5).max(120),
