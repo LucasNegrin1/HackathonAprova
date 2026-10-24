@@ -257,7 +257,8 @@ export async function executarFerramenta(conversa: Conversa, nome: string, entra
         conversa.contato = `${campos.nome ?? "Sem nome"} <${campos.email_retorno}>`;
       }
       const conhecidos = categoria.campos.filter((c) => !/^n[aã]o sabe/i.test(campos[c.id] ?? "")).length;
-      const prioridade = calcularPrioridade(categoria.id, conversa.perfil, campos);
+      const relato = conversa.transcript.filter((m) => m.de === "usuario").map((m) => m.texto).join(" ");
+      const prioridade = calcularPrioridade(categoria.id, conversa.perfil, campos, relato);
 
       const resumo = String(entrada.resumo ?? "");
       let protocolo: string | undefined;

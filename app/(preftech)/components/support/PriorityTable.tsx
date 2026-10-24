@@ -186,7 +186,11 @@ export const PriorityTable: React.FC<PriorityTableProps> = ({
 
                       {/* 2. Prioridade */}
                       <div className="grid-td col-prio">
-                        {getPriorityBadge(ticket.priority)}
+                        {ticket.unprioritized ? (
+                          <span className="priority-flag-wrap" title="Sem prioridade definida">—</span>
+                        ) : (
+                          getPriorityBadge(ticket.priority)
+                        )}
                       </div>
 
                       {/* 3. Motivo de Atenção */}

@@ -1,7 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 
 export type Perfil = "municipe" | "analista_prefeitura";
-export type Canal = "whatsapp" | "chat";
+export type Canal = "chat";
 
 export interface Campo {
   id: string;
@@ -62,8 +62,8 @@ export interface Conversa {
   itensGrok?: unknown[];
   /** Histórico no formato chat completions (provedor Groq). */
   mensagensGroq?: unknown[];
-  /** Conversa iniciada pelo widget do site, com identificação feita no formulário. */
-  origem?: "site" | "simulador" | "whatsapp";
+  /** Conversa iniciada pelo bot (widget no PrefTech ou no site de uma prefeitura). */
+  origem?: "site";
   conta?: string;
   email?: string;
   /** O código mostrou o resumo e espera o "sim" para abrir o chamado. */

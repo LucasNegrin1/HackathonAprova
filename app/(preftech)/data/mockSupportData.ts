@@ -30,6 +30,8 @@ export interface Ticket {
   parentTicketNumber?: string;
   needsManagerReview?: boolean;
   managerReviewReason?: string;
+  /** Chamado ainda sem prioridade definida (veio assim da origem). `priority` fica P4 só para a ordenação. */
+  unprioritized?: boolean;
 }
 
 export interface TeamMember {

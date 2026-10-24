@@ -1,5 +1,5 @@
-import type { Priority, RequestType, TeamMember, Ticket, TicketStatus } from "@/app/gestao/data/mockSupportData";
-import { MOCK_TEAM_MEMBERS } from "@/app/gestao/data/mockSupportData";
+import type { Priority, RequestType, TeamMember, Ticket, TicketStatus } from "@/app/(preftech)/data/mockSupportData";
+import { MOCK_TEAM_MEMBERS } from "@/app/(preftech)/data/mockSupportData";
 import { supabase } from "./supabase";
 
 // Dados reais do Supabase no formato do painel gerencial PrefTech (app/gestao).
@@ -11,6 +11,7 @@ const SLA_HORAS: Record<Priority, number> = { P1: 4, P2: 8, P3: 24, P4: 72 };
 const SEM_SLA = 1_000_000_000;
 
 const STATUS: Record<string, TicketStatus> = {
+  aberto: "Aberto",
   na_fila: "Aberto",
   em_atendimento: "Em Atendimento",
   aguardando_cliente: "Aguardando Cliente",
@@ -57,6 +58,7 @@ function paraTicket(c: Linha, agora: number): Ticket {
 
   const motivos = [
     backlog ? "Backlog de produto" : null,
+    c.prioridade === null && !backlog ? "Sem prioridade definida" : null,
     slaMinutos < 0 ? `SLA vencido há ${formatarMinutos(-slaMinutos)}` : null,
     dias >= 10 ? `Parado há ${dias} dias` : null,
     c.volume_grupo > 0 ? `+${c.volume_grupo} chamados vinculados` : null,
@@ -91,6 +93,7 @@ function paraTicket(c: Linha, agora: number): Ticket {
     backlogIssueKey: backlog ? c.protocolo : undefined,
     isSimilarOrChild: c.status === "vinculado" || undefined,
     parentTicketNumber: c.pai?.protocolo,
+    unprioritized: c.prioridade === null || undefined,
     needsManagerReview: revisao ? true : undefined,
     managerReviewReason: revisao,
   };
@@ -108,7 +111,7 @@ export async function dadosGestao(): Promise<{ tickets: Ticket[]; members: TeamM
     .select(
       "id, protocolo, titulo, descricao, categoria, tipo, status, prioridade, impacto_efetivo, urgencia, responsavel, volume_grupo, justificativa_p1, motivo_ajuste, escalado_em, criado_em, ultima_movimentacao_em, contas(nome), pai:chamado_pai_id(protocolo)",
     )
-    .in("status", ["na_fila", "em_atendimento", "aguardando_cliente", "vinculado", "backlog_produto"]);
+    .in("status", ["aberto", "na_fila", "em_atendimento", "aguardando_cliente", "vinculado", "backlog_produto"]);
   if (error) throw error;
 
   const agora = Date.now();

@@ -6,7 +6,7 @@ import type { Conversa, Perfil } from "@/lib/types";
 
 export const maxDuration = 300;
 
-/** Estado da conversa exibido no painel "bastidores" do simulador. */
+/** Estado da conversa devolvido ao widget (status, checklist e protocolo). */
 function bastidores(conversa: Conversa) {
   const categoria = categoriaPorId(conversa.categoria);
   return {
@@ -43,18 +43,13 @@ export async function POST(request: Request) {
 
   let conversa = conversaId ? buscarConversa(conversaId) : undefined;
   if (!conversa || conversa.status !== "em_atendimento") {
-    if (site) {
-      // Chat do site: sem identificação para conversar. Nome e e-mail entram no checklist só se for abrir chamado.
-      conversa = novaConversa("chat", "Visitante do site", perfil);
-      conversa.origem = "site";
-      if (site.conta?.trim()) {
-        // Conta fixada pelo site que instalou o widget (data-conta): o agente não pergunta o município.
-        conversa.conta = site.conta.trim();
-        conversa.campos.municipio = { valor: conversa.conta, turno: 1 };
-      }
-    } else {
-      conversa = novaConversa("chat", perfil === "analista_prefeitura" ? "Analista (simulador)" : "Munícipe (simulador)", perfil);
-      conversa.origem = "simulador";
+    // Sem identificação para conversar: nome e e-mail entram no checklist só se for abrir chamado.
+    conversa = novaConversa("chat", "Visitante do site", perfil);
+    conversa.origem = "site";
+    if (site?.conta?.trim()) {
+      // Conta fixada pelo site que instalou o widget (data-conta): o agente não pergunta o município.
+      conversa.conta = site.conta.trim();
+      conversa.campos.municipio = { valor: conversa.conta, turno: 1 };
     }
   }
 

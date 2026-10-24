@@ -13,8 +13,12 @@ const PADRAO_POR_CATEGORIA: Record<string, Prioridade> = {
   configuracao_fluxo: "baixa",
 };
 
-const SINAIS_BLOQUEIO = ["todos", "ninguem consegue", "parado", "parou", "travou tudo", "equipe toda", "toda a equipe", "fora do ar", "nao funciona para ninguem"];
-const SINAIS_PRAZO = ["vence hoje", "vence amanha", "prazo legal", "multa", "embargo", "urgente"];
+const SINAIS_BLOQUEIO = [
+  "todos", "todas as", "ninguem consegue", "ninguem da equipe", "nao consegue trabalhar", "nao conseguimos trabalhar",
+  "parado", "parada", "parou", "travou tudo", "equipe toda", "toda a equipe", "equipe inteira", "fora do ar",
+  "nao funciona para ninguem",
+];
+const SINAIS_PRAZO = ["vence hoje", "vence amanha", "ate hoje", "ate amanha", "para hoje", "para amanha", "prazo legal", "multa", "embargo", "urgente"];
 
 export interface ResultadoPrioridade {
   prioridade: Prioridade;
@@ -23,8 +27,11 @@ export interface ResultadoPrioridade {
   prazo: Date;
 }
 
-export function calcularPrioridade(categoria: string, perfil: Perfil, campos: Record<string, string>): ResultadoPrioridade {
-  const texto = normalizar(Object.values(campos).join(" "));
+/** `relato`: mensagens do usuário. O modelo pode reescrever o checklist com outras palavras; o relato original não. */
+export function calcularPrioridade(categoria: string, perfil: Perfil, campos: Record<string, string>, relato = ""): ResultadoPrioridade {
+  const texto = normalizar(`${Object.values(campos).join(" ")} ${relato}`);
+  // "amanhã"/"hoje" sozinhos no campo prazo também indicam urgência.
+  const prazoCurto = /^(hoje|amanha)\b/.test(normalizar(campos.prazo ?? ""));
   let prioridade = PADRAO_POR_CATEGORIA[categoria] ?? "media";
   let motivo = "padrão da categoria";
 
@@ -37,9 +44,9 @@ export function calcularPrioridade(categoria: string, perfil: Perfil, campos: Re
   } else if (bloqueio) {
     prioridade = "alta";
     motivo = `atendimento bloqueado ("${bloqueio}")`;
-  } else if (prazo) {
+  } else if (prazo || prazoCurto) {
     prioridade = "alta";
-    motivo = `risco de prazo ("${prazo}")`;
+    motivo = `risco de prazo ("${prazo ?? campos.prazo}")`;
   }
 
   const slaHoras = SLA_HORAS[prioridade];

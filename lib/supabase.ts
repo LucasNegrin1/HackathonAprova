@@ -52,7 +52,11 @@ export interface NovoChamado {
   motivoSugestao: string;
 }
 
-/** Grava o chamado com status "aberto" (aguardando triagem) e devolve o protocolo gerado pelo banco. */
+/**
+ * Grava o chamado e já o tria pelas regras do banco (triar_chamado), com a sugestão do agente.
+ * Não há etapa manual de triagem: o chamado entra direto na fila do painel PrefTech
+ * (ou no backlog de produto, se for sugestão ou parametrização). Devolve o protocolo gerado pelo banco.
+ */
 export async function gravarChamadoSupabase(c: NovoChamado): Promise<string> {
   const { data, error } = await supabase()
     .from("chamados")
@@ -72,9 +76,35 @@ export async function gravarChamadoSupabase(c: NovoChamado): Promise<string> {
       urgencia_sugerida: c.urgenciaSugerida,
       motivo_sugestao: c.motivoSugestao,
     })
-    .select("protocolo")
+    .select("id, protocolo")
     .single();
   if (error) throw error;
+
+  await triarAutomatico(data.id, c);
   return data.protocolo;
+}
+
+/**
+ * Triagem automática com impacto × urgência sugeridos pelo agente. Se a conta já estiver na cota de P1,
+ * o banco recusa (COTA_P1_EXCEDIDA): o chamado entra como P1 com justificativa, e o painel mostra
+ * em "Revisão do gestor" para alguém decidir se mantém ou rebaixa.
+ */
+async function triarAutomatico(id: string, c: NovoChamado) {
+  const params = {
+    p_id: id,
+    p_tipo: c.tipo ?? "problema",
+    p_impacto: c.impactoSugerido,
+    p_urgencia: c.urgenciaSugerida,
+    p_autor: "bot de atendimento",
+  };
+  let { error } = await supabase().rpc("triar_chamado", params);
+  if (error?.message === "COTA_P1_EXCEDIDA") {
+    ({ error } = await supabase().rpc("triar_chamado", {
+      ...params,
+      p_justificativa_p1: `Classificado como P1 pelo bot acima da cota da conta (${c.motivoSugestao}). Revisar: manter ou rebaixar.`,
+    }));
+  }
+  // Se a triagem falhar, o chamado continua gravado como "aberto" e o erro fica no log.
+  if (error) console.error("[supabase] triagem automática falhou", error);
 }
 

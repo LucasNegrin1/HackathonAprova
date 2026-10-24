@@ -5,8 +5,3 @@
   --font-mono: var(--font-geist-mono);
 }
 
-.wa-fundo {
-  background-color: #efeae2;
-  background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px);
-  background-size: 16px 16px;
-}

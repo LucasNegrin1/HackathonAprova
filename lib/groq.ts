@@ -87,7 +87,7 @@ function compactar(historico: Mensagem[]): Mensagem[] {
   );
 }
 
-/** Converte markdown comum para o formato do WhatsApp/widget (*negrito*) e tira separadores e títulos. */
+/** Converte markdown comum para o formato do chat (*negrito*) e tira separadores e títulos. */
 function formatoChat(texto: string): string {
   return texto
     .replace(/\*\*(.+?)\*\*/g, "*$1*")

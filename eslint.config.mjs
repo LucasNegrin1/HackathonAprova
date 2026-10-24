@@ -13,9 +13,9 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     // Front Engine do PrefTech (Canvas, Schema JSON, Telemetria): veio do projeto Vite, onde o lint
-    // era o oxlint, e ainda não é usado pela página /gestao. Mantido intacto até ser integrado.
-    "app/gestao/engine/**",
-    "app/gestao/components/views/**",
+    // era o oxlint, e ainda não é usado pelo painel. Mantido intacto até ser integrado.
+    "app/*/engine/**",
+    "app/*/components/views/**",
   ]),
 ]);
 

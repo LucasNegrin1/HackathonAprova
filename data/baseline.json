@@ -1,8 +1,0 @@
-{
-  "exemplo": true,
-  "fonte": "Valores de exemplo. Substitua pelos números reais do Pylon (últimos 90 dias) antes da apresentação.",
-  "pctTicketsComComplemento": 0.6,
-  "complementosPorTicket": 2.1,
-  "pctResolvidosPrimeiraAnalise": 0.35,
-  "pctDuvidasQueViramTicket": 1
-}
