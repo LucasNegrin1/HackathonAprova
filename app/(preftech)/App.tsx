@@ -47,7 +47,13 @@ export default function App() {
 
   // Metrics Data Calculation
   const metrics = useMemo(() => {
+    const breached = tickets.filter((t) => t.slaMinutesRemaining < 0);
+    const stagnant = tickets.filter((t) => t.daysStagnant >= 10);
     return {
+      p1Breached: breached.filter((t) => t.priority === 'P1').length,
+      maxDelayMinutes: breached.reduce((max, t) => Math.max(max, -t.slaMinutesRemaining), 0),
+      avgStagnantDays: stagnant.length ? Math.round(stagnant.reduce((s, t) => s + t.daysStagnant, 0) / stagnant.length) : 0,
+      p1Unassigned: tickets.filter((t) => t.priority === 'P1' && t.assignee.isUnassigned).length,
       p1Active: tickets.filter((t) => t.priority === 'P1').length,
       slaBreached: tickets.filter((t) => t.slaMinutesRemaining < 0).length,
       slaAtRisk: tickets.filter((t) => t.slaMinutesRemaining >= 0 && t.slaMinutesRemaining <= 30).length,
@@ -55,6 +61,12 @@ export default function App() {
       unassigned: tickets.filter((t) => t.assignee.isUnassigned).length,
       waitingClient: tickets.filter((t) => t.status === 'Aguardando Cliente').length
     };
+  }, [tickets]);
+
+  // Cumprimento de SLA: chamados de suporte (fora do backlog) dentro do prazo.
+  const slaCompliance = useMemo(() => {
+    const support = tickets.filter((t) => !t.isProductBacklog);
+    return support.length ? (support.filter((t) => t.slaMinutesRemaining >= 0).length / support.length) * 100 : 100;
   }, [tickets]);
 
   // Card Filter Handler (toggle or set)
@@ -173,6 +185,7 @@ export default function App() {
         setActiveTab={setActiveTab}
         criticalCount={metrics.p1Active + metrics.slaBreached}
         totalTickets={tickets.length}
+        slaCompliance={slaCompliance}
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
       />

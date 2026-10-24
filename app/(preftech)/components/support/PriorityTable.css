@@ -92,7 +92,7 @@
 
 .ops-table-header {
   display: grid;
-  grid-template-columns: 85px 65px 190px minmax(260px, 1fr) 130px 170px 140px 45px;
+  grid-template-columns: 85px 65px 170px minmax(200px, 1fr) 130px 160px 140px 45px;
   align-items: center;
   gap: 12px;
   padding: 0 16px;
@@ -126,7 +126,7 @@
 
 .ops-table-row {
   display: grid;
-  grid-template-columns: 85px 65px 190px minmax(260px, 1fr) 130px 170px 140px 45px;
+  grid-template-columns: 85px 65px 170px minmax(200px, 1fr) 130px 160px 140px 45px;
   align-items: center;
   gap: 12px;
   padding: 10px 16px;

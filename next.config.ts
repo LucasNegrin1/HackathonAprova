@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // O indicador de desenvolvimento ficava em cima do botão do bot (canto inferior direito).
+  // Erros de compilação e de execução continuam aparecendo.
+  devIndicators: false,
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

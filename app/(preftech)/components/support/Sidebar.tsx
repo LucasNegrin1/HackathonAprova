@@ -10,11 +10,14 @@ import {
 } from 'lucide-react';
 import './Sidebar.css';
 
+const SLA_TARGET = 98;
+
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   criticalCount: number;
   totalTickets: number;
+  slaCompliance: number;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -24,6 +27,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setActiveTab, 
   criticalCount,
   totalTickets,
+  slaCompliance,
   isOpen,
   onClose
 }) => {
@@ -55,20 +59,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
               <defs>
                 <linearGradient id="sidebar-light-logo-g" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0" stop-color="#4F46E5"/>
-                  <stop offset="1" stop-color="#1E1B4B"/>
+                  <stop offset="0" stopColor="#4F46E5"/>
+                  <stop offset="1" stopColor="#1E1B4B"/>
                 </linearGradient>
               </defs>
               <g transform="translate(2 2)">
                 <path d="M12 6h40a8 8 0 0 1 8 8v28a8 8 0 0 1-8 8H28l-12 9v-9h-4a8 8 0 0 1-8-8V14a8 8 0 0 1 8-8z" fill="url(#sidebar-light-logo-g)"/>
-                <circle cx="32" cy="28" r="14" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="3.5"/>
-                <path d="M32 14a14 14 0 0 1 14 14" fill="none" stroke="#22D3A6" stroke-width="3.5" stroke-linecap="round"/>
-                <path d="M25.5 28.5l4.5 4.5 8.5-9" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="32" cy="28" r="14" fill="none" stroke="#fff" strokeOpacity=".25" strokeWidth="3.5"/>
+                <path d="M32 14a14 14 0 0 1 14 14" fill="none" stroke="#22D3A6" strokeWidth="3.5" strokeLinecap="round"/>
+                <path d="M25.5 28.5l4.5 4.5 8.5-9" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
               </g>
-              <text x="76" y="44" font-family="'Plus Jakarta Sans', Inter, sans-serif" font-size="32" letter-spacing="-0.5">
-                <tspan font-weight="800" fill="#0F0D2E">PREF</tspan><tspan font-weight="600" fill="#22D3A6">tech</tspan>
+              <text x="76" y="44" fontFamily="'Plus Jakarta Sans', Inter, sans-serif" fontSize="32" letterSpacing="-0.5">
+                <tspan fontWeight="800" fill="#0F0D2E">PREF</tspan><tspan fontWeight="600" fill="#22D3A6">tech</tspan>
               </text>
-              <text x="78" y="58" font-family="'Plus Jakarta Sans', Inter, sans-serif" font-size="8.5" font-weight="700" letter-spacing="2" fill="#4F46E5">SUPORTE SEM ESPERA</text>
+              <text x="78" y="58" fontFamily="'Plus Jakarta Sans', Inter, sans-serif" fontSize="8.5" fontWeight="700" letterSpacing="2" fill="#4F46E5">SUPORTE SEM ESPERA</text>
             </svg>
           </div>
 
@@ -147,14 +151,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="sidebar-health-card">
           <div className="health-card-top">
             <span className="health-title">Cumprimento de SLA</span>
-            <span className="health-val font-mono">91.4%</span>
+            <span className="health-val font-mono">{slaCompliance.toFixed(1)}%</span>
           </div>
           <div className="health-bar-bg">
-            <div className="health-bar-fill" style={{ width: '91.4%' }} />
+            <div className="health-bar-fill" style={{ width: `${slaCompliance}%` }} />
           </div>
           <div className="health-detail">
             <TrendingDown size={13} className="text-critical" />
-            <span>Meta: 98.0% (Abaixo do target)</span>
+            <span>Meta: {SLA_TARGET.toFixed(1)}% ({slaCompliance >= SLA_TARGET ? 'Dentro do target' : 'Abaixo do target'})</span>
           </div>
         </div>
       </aside>

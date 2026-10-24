@@ -1,8 +1,9 @@
 @import './styles/tokens.css';
 
-/* No Next, o painel vive dentro de .preftech-root (app/gestao/layout.tsx): os resets do Vite
-   (html, body, #root, button...) foram escopados para não afetar as outras páginas do app. */
-.preftech-root *, .preftech-root *::before, .preftech-root *::after {
+/* No Next, o painel vive dentro de .preftech-root (app/(preftech)/layout.tsx). Os resets do Vite
+   (html, body, #root, button...) foram escopados com :where(), que não soma especificidade:
+   assim, como no Vite, as classes dos componentes continuam vencendo o reset. */
+:where(.preftech-root) *, :where(.preftech-root) *::before, :where(.preftech-root) *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -37,7 +38,7 @@
   background: var(--text-dim);
 }
 
-.preftech-root button {
+:where(.preftech-root) button {
   font-family: inherit;
   cursor: pointer;
   border: none;
@@ -45,13 +46,13 @@
   outline: none;
 }
 
-.preftech-root input, .preftech-root select, .preftech-root textarea {
+:where(.preftech-root) input, :where(.preftech-root) select, :where(.preftech-root) textarea {
   font-family: inherit;
   font-size: 13px;
   outline: none;
 }
 
-.preftech-root .font-mono {
+:where(.preftech-root) .font-mono {
   font-family: var(--font-mono);
 }
 

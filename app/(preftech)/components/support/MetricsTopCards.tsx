@@ -15,7 +15,18 @@ interface MetricsData {
   stagnant10d: number;
   unassigned: number;
   waitingClient: number;
+  // Detalhes calculados dos dados reais (antes eram textos fixos do mock).
+  p1Breached: number;
+  maxDelayMinutes: number;
+  avgStagnantDays: number;
+  p1Unassigned: number;
 }
+
+const formatDelay = (minutes: number) => {
+  if (minutes < 60) return `${minutes} min`;
+  if (minutes < 1440) return `${Math.floor(minutes / 60)}h`;
+  return `${Math.floor(minutes / 1440)} dias`;
+};
 
 interface MetricsTopCardsProps {
   metrics: MetricsData;
@@ -47,7 +58,7 @@ export const MetricsTopCards: React.FC<MetricsTopCardsProps> = ({
           <span className="metric-title">P1 Ativos</span>
           <div className="metric-subdetail">
             <span className="subdetail-dot red-dot pulse-critical" />
-            <span>2 com SLA vencido</span>
+            <span>{metrics.p1Breached} com SLA vencido</span>
           </div>
         </div>
       </div>
@@ -68,7 +79,7 @@ export const MetricsTopCards: React.FC<MetricsTopCardsProps> = ({
           <span className="metric-number font-mono">{metrics.slaBreached}</span>
           <span className="metric-title">SLAs Vencidos</span>
           <div className="metric-subdetail text-critical">
-            <span>Maior atraso: 48 min</span>
+            <span>{metrics.slaBreached > 0 ? `Maior atraso: ${formatDelay(metrics.maxDelayMinutes)}` : 'Nenhum vencido'}</span>
           </div>
         </div>
       </div>
@@ -110,7 +121,7 @@ export const MetricsTopCards: React.FC<MetricsTopCardsProps> = ({
           <span className="metric-number font-mono">{metrics.stagnant10d}</span>
           <span className="metric-title">Parados &gt; 10d</span>
           <div className="metric-subdetail text-muted">
-            <span>Média de 12 dias</span>
+            <span>{metrics.stagnant10d > 0 ? `Média de ${metrics.avgStagnantDays} dias` : 'Nenhum parado'}</span>
           </div>
         </div>
       </div>
@@ -131,7 +142,7 @@ export const MetricsTopCards: React.FC<MetricsTopCardsProps> = ({
           <span className="metric-number font-mono">{metrics.unassigned}</span>
           <span className="metric-title">Sem Responsável</span>
           <div className="metric-subdetail text-warning">
-            <span>1 P1 na fila geral</span>
+            <span>{metrics.p1Unassigned} P1 sem responsável</span>
           </div>
         </div>
       </div>
