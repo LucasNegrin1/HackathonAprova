@@ -48,9 +48,13 @@
 }
 
 .ops-content-container {
-  padding: 24px 28px 48px;
+  padding: 24px 32px 48px;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 1560px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 @media (max-width: 767px) {
@@ -61,8 +65,90 @@
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .ops-content-container {
-    padding: 20px 16px 40px;
+    padding: 20px 20px 40px;
   }
+}
+
+/* Page Top Action Bar */
+.ops-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ops-page-heading {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+  letter-spacing: -0.4px;
+}
+
+.ops-page-subheading {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.ops-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-action-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm, 6px);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-action-outline:hover {
+  background-color: var(--bg-surface-subtle);
+  border-color: var(--border-dark);
+  color: var(--text-primary);
+}
+
+.btn-demo-action {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.btn-demo-action:hover {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.btn-action-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  background-color: #0f172a;
+  border: 1px solid #0f172a;
+  border-radius: var(--radius-sm, 6px);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-action-primary:hover {
+  background-color: #1e293b;
+  border-color: #1e293b;
 }
 
 /* Quick Filter Active Bar */
@@ -70,13 +156,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #f0fdf9;
-  border: 1px solid #22d3a6;
+  background-color: #f8fafc;
+  border: 1px solid var(--border-medium);
   border-radius: var(--radius-md);
   padding: 10px 16px;
   margin-bottom: 16px;
   font-size: 13px;
-  color: #0f766e;
+  color: var(--text-secondary);
 }
 
 .active-filter-text {
@@ -88,10 +174,14 @@
 
 .btn-clear-active-filter {
   font-size: 12px;
-  font-weight: 700;
-  color: #0f766e;
+  font-weight: 600;
+  color: var(--text-muted);
   text-decoration: underline;
   cursor: pointer;
+}
+
+.btn-clear-active-filter:hover {
+  color: var(--text-primary);
 }
 
 /* Footer Operational Status */

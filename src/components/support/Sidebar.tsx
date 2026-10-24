@@ -17,6 +17,7 @@ interface SidebarProps {
   totalTickets: number;
   isOpen: boolean;
   onClose: () => void;
+  onOpenSettings?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -25,10 +26,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   criticalCount,
   totalTickets,
   isOpen,
-  onClose
+  onClose,
+  onOpenSettings
 }) => {
   const handleNavClick = (tab: string) => {
     setActiveTab(tab);
+    if (tab === 'team') {
+      const el = document.getElementById('team-workload-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } else if (tab === 'pending') {
+      const el = document.getElementById('pending-issues-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     if (window.innerWidth < 1024) {
       onClose();
     }
@@ -133,30 +144,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="sidebar-section-title">POLÍTICAS & SLA</div>
 
         <div className="sidebar-secondary-nav">
-          <button className="nav-item-secondary">
+          <button 
+            className="nav-item-secondary"
+            onClick={onOpenSettings}
+            title="Abrir configurações da Matriz de Prioridade e SLAs"
+          >
             <Settings size={16} />
             <span>Matriz de Prioridade (P1–P4)</span>
           </button>
-          <button className="nav-item-secondary">
+          <button 
+            className="nav-item-secondary"
+            onClick={onOpenSettings}
+            title="Abrir configurações de plantão e equipe"
+          >
             <HelpCircle size={16} />
             <span>Escala de Plantão N2/N3</span>
           </button>
         </div>
 
         {/* SLA Health Indicator Card at bottom */}
-        <div className="sidebar-health-card">
-          <div className="health-card-top">
-            <span className="health-title">Cumprimento de SLA</span>
-            <span className="health-val font-mono">91.4%</span>
-          </div>
-          <div className="health-bar-bg">
-            <div className="health-bar-fill" style={{ width: '91.4%' }} />
-          </div>
-          <div className="health-detail">
-            <TrendingDown size={13} className="text-critical" />
-            <span>Meta: 98.0% (Abaixo do target)</span>
-          </div>
-        </div>
+        {(() => {
+          const slaRate = totalTickets > 0 
+            ? Math.max(0, Math.round(((totalTickets - criticalCount) / totalTickets) * 1000) / 10)
+            : 100.0;
+          const isBelowTarget = totalTickets > 0 && slaRate < 98.0;
+
+          return (
+            <div className={`sidebar-health-card ${isBelowTarget ? 'health-card-warning' : 'health-card-healthy'}`}>
+              <div className="health-card-top">
+                <span className="health-title">Cumprimento de SLA</span>
+                <span className="health-val font-mono">{totalTickets > 0 ? `${slaRate}%` : '100%'}</span>
+              </div>
+              <div className="health-bar-bg">
+                <div className="health-bar-fill" style={{ width: `${slaRate}%` }} />
+              </div>
+              <div className="health-detail">
+                {isBelowTarget ? (
+                  <>
+                    <TrendingDown size={13} className="text-warning" />
+                    <span>Meta: 98.0% (Abaixo do target)</span>
+                  </>
+                ) : (
+                  <span>Meta: 98.0% (Dentro do target)</span>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </aside>
     </>
   );

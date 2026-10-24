@@ -54,6 +54,17 @@ input, select, textarea {
   outline: none;
 }
 
+/* Remove default spinner arrows from number inputs across all screens */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 .font-mono {
   font-family: var(--font-mono);
 }

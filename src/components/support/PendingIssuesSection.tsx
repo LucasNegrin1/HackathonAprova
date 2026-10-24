@@ -26,7 +26,7 @@ export const PendingIssuesSection: React.FC<PendingIssuesSectionProps> = ({
   const managerReview = tickets.filter((t) => t.needsManagerReview);
 
   return (
-    <div className="pending-section-wrap">
+    <div id="pending-issues-section" className="pending-section-wrap">
       <div className="pending-section-header">
         <h3 className="pending-main-title">Pendências & Bloqueios Operacionais</h3>
         <span className="pending-main-subtitle">
