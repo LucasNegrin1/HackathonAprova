@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { 
   AlertCircle, 
-  Flame, 
+  Flag, 
   Clock, 
   UserX, 
   CheckCircle2, 
@@ -40,16 +40,32 @@ export const PriorityTable: React.FC<PriorityTableProps> = ({
     switch (priority) {
       case 'P1':
         return (
-          <span className="priority-pill p1-pill">
-            <Flame size={12} /> P1
+          <span className="priority-flag-wrap p1-flag" title="Prioridade P1 - Crítico">
+            <Flag size={14} fill="currentColor" />
+            <span className="flag-label">P1</span>
           </span>
         );
       case 'P2':
-        return <span className="priority-pill p2-pill">P2</span>;
+        return (
+          <span className="priority-flag-wrap p2-flag" title="Prioridade P2 - Alta">
+            <Flag size={14} fill="currentColor" />
+            <span className="flag-label">P2</span>
+          </span>
+        );
       case 'P3':
-        return <span className="priority-pill p3-pill">P3</span>;
+        return (
+          <span className="priority-flag-wrap p3-flag" title="Prioridade P3 - Média">
+            <Flag size={14} fill="currentColor" />
+            <span className="flag-label">P3</span>
+          </span>
+        );
       case 'P4':
-        return <span className="priority-pill p4-pill">P4</span>;
+        return (
+          <span className="priority-flag-wrap p4-flag" title="Prioridade P4 - Baixa">
+            <Flag size={14} fill="currentColor" />
+            <span className="flag-label">P4</span>
+          </span>
+        );
     }
   };
 

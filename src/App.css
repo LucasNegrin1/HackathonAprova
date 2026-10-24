@@ -53,6 +53,18 @@
   flex-direction: column;
 }
 
+@media (max-width: 767px) {
+  .ops-content-container {
+    padding: 16px 12px 40px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ops-content-container {
+    padding: 20px 16px 40px;
+  }
+}
+
 /* Quick Filter Active Bar */
 .active-filter-alert-bar {
   display: flex;

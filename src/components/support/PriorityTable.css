@@ -173,41 +173,53 @@
   white-space: nowrap;
 }
 
-/* 2. Priority Pills */
-.priority-pill {
+/* 2. Priority Flags */
+.priority-flag-wrap {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px 6px;
+  gap: 4px;
+  padding: 3px 7px;
+  border-radius: var(--radius-xs);
   font-size: 11px;
   font-weight: 800;
-  border-radius: var(--radius-xs);
   white-space: nowrap;
+  line-height: 1;
 }
 
-.p1-pill {
-  background-color: var(--critical-bg);
-  color: var(--critical-text);
-  border: 1px solid var(--critical-border);
+.flag-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
-.p2-pill {
-  background-color: var(--warning-bg);
-  color: var(--warning-text);
-  border: 1px solid var(--warning-border);
+/* P1 – Vermelho (Crítico) */
+.p1-flag {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
 }
 
-.p3-pill {
-  background-color: var(--info-bg);
-  color: var(--info-text);
-  border: 1px solid var(--info-border);
+/* P2 – Laranja (Alta) */
+.p2-flag {
+  background-color: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fdba74;
 }
 
-.p4-pill {
-  background-color: var(--neutral-badge-bg);
-  color: var(--neutral-badge-text);
-  border: 1px solid var(--border-medium);
+/* P3 – Azul (Média) */
+.p3-flag {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
 }
+
+/* P4 – Verde (Baixa) */
+.p4-flag {
+  background-color: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
 
 /* 3. Urgency Reason */
 .urgency-reason-pill {
@@ -603,4 +615,70 @@
   text-align: center;
   color: var(--text-muted);
   font-size: 13px;
+}
+
+/* ===================================================
+   Responsive: Mobile Card Layout (< 768px)
+   =================================================== */
+@media (max-width: 767px) {
+  .ops-table-grid {
+    min-width: unset;
+  }
+
+  .ops-table-header {
+    display: none;
+  }
+
+  .ops-table-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+    min-height: unset;
+    grid-template-columns: unset;
+  }
+
+  .col-number,
+  .col-prio,
+  .col-motivo,
+  .col-ticket-account,
+  .col-status,
+  .col-assignee,
+  .col-sla,
+  .col-expand-action {
+    width: 100%;
+  }
+
+  /* Mobile row header line: number + priority + expand button */
+  .grid-td.col-number {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .grid-td.col-expand-action {
+    display: none;
+  }
+
+  /* After number, show a chevron inline */
+  .ops-table-row::after {
+    content: none;
+  }
+
+  /* Mobile: add row number + chevron in same line visually via column reorder */
+  .ops-table-row {
+    position: relative;
+  }
+}
+
+/* Small tablets: allow horizontal scroll for the table */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .ops-table-grid {
+    min-width: 860px;
+  }
+
+  .ops-table-header,
+  .ops-table-row {
+    grid-template-columns: 80px 60px 160px minmax(200px, 1fr) 120px 150px 130px 40px;
+  }
 }
