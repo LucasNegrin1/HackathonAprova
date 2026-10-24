@@ -52,6 +52,17 @@
   outline: none;
 }
 
+/* Remove default spinner arrows from number inputs across all screens */
+:where(.preftech-root) input[type="number"]::-webkit-inner-spin-button,
+:where(.preftech-root) input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+:where(.preftech-root) input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 :where(.preftech-root) .font-mono {
   font-family: var(--font-mono);
 }

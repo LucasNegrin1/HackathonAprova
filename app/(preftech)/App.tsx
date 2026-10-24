@@ -1,51 +1,123 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Sidebar } from './components/support/Sidebar';
 import { MetricsTopCards } from './components/support/MetricsTopCards';
 import { PriorityTable } from './components/support/PriorityTable';
 import { TeamWorkloadPanel } from './components/support/TeamWorkloadPanel';
 import { PendingIssuesSection } from './components/support/PendingIssuesSection';
-import {
-  MOCK_TICKETS,
+import { 
+  SupportSettingsModal, 
+  DEFAULT_SUPPORT_CONFIG, 
+  type SupportConfig 
+} from './components/support/SupportSettingsModal';
+import { 
+  MOCK_TICKETS, 
   MOCK_TEAM_MEMBERS,
-  type TeamMember,
-  type Ticket
+  SAMPLE_TICKETS,
+  SAMPLE_TEAM_MEMBERS,
+  type Ticket,
+  type TeamMember
 } from './data/mockSupportData';
-import { Filter, Menu } from 'lucide-react';
+import { Filter, Menu, Sliders, PlusCircle, Zap, RotateCcw, AlertTriangle } from 'lucide-react';
 import './index.css';
 import './App.css';
 
 export default function App() {
-  // Dados reais do Supabase (/api/gestao). Se a API falhar, volta para os dados de exemplo e avisa.
+  const [config, setConfig] = useState<SupportConfig>(() => {
+    try {
+      const saved = localStorage.getItem('preftech_support_config');
+      return saved ? JSON.parse(saved) : DEFAULT_SUPPORT_CONFIG;
+    } catch {
+      return DEFAULT_SUPPORT_CONFIG;
+    }
+  });
+
+  // Dados reais do Supabase (/api/gestao). Os botões de demonstração só trocam a visualização.
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [origemDados, setOrigemDados] = useState<'carregando' | 'supabase' | 'exemplo'>('carregando');
+
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [origemDados, setOrigemDados] = useState<'carregando' | 'supabase' | 'exemplo' | 'demonstracao'>('carregando');
 
   const [activeTab, setActiveTab] = useState('overview');
   const [cardFilter, setCardFilter] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Configuration persistence
+  const handleSaveConfig = (newConfig: SupportConfig) => {
+    setConfig(newConfig);
+    try {
+      localStorage.setItem('preftech_support_config', JSON.stringify(newConfig));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Cadastros feitos pelo modal ficam só nesta sessão do navegador (não gravam no Supabase):
+  // o canal oficial para abrir chamado é o bot. Guardados à parte para sobreviver à atualização periódica.
+  const ticketsLocais = useRef<Ticket[]>([]);
+  const membrosLocais = useRef<TeamMember[]>([]);
+  // "Carregar Dados de Demonstração" e "Limpar Fila" só trocam a visualização e pausam a atualização.
+  const emDemonstracao = useRef(false);
+
+  const handleAddTicket = (newTicket: Ticket) => {
+    ticketsLocais.current = [newTicket, ...ticketsLocais.current];
+    setTickets((prev) => [newTicket, ...prev]);
+  };
+
+  const handleAddTeamMember = (newMember: TeamMember) => {
+    membrosLocais.current = [...membrosLocais.current, newMember];
+    setTeamMembers((prev) => [...prev, newMember]);
+  };
+
+  const handleLoadSampleData = () => {
+    emDemonstracao.current = true;
+    setOrigemDados('demonstracao');
+    setTickets(SAMPLE_TICKETS);
+    setTeamMembers(SAMPLE_TEAM_MEMBERS);
+    setCardFilter(null);
+  };
+
+  const handleClearAllData = () => {
+    emDemonstracao.current = true;
+    setOrigemDados('demonstracao');
+    setTickets([]);
+    setTeamMembers([]);
+    setCardFilter(null);
+  };
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setCardFilter(null); // Clear card filter when changing view mode
+  };
 
   // Ticket recém-criado pelo bot: a tabela mostra só ele até o usuário pedir "Ver todos".
   const [ticketDestaque, setTicketDestaque] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
+    if (emDemonstracao.current) return;
     try {
       const r = await fetch('/api/gestao', { cache: 'no-store' });
       if (!r.ok) throw new Error(String(r.status));
       const dados = (await r.json()) as { tickets: Ticket[]; members: TeamMember[] };
-      setTickets(dados.tickets);
-      setMembers(dados.members);
+      setTickets([...ticketsLocais.current, ...dados.tickets]);
+      setTeamMembers([...dados.members, ...membrosLocais.current]);
       setOrigemDados('supabase');
     } catch {
       setTickets(MOCK_TICKETS);
-      setMembers(MOCK_TEAM_MEMBERS);
+      setTeamMembers(MOCK_TEAM_MEMBERS);
       setOrigemDados('exemplo');
     }
   }, []);
 
+  const voltarAosDadosReais = () => {
+    emDemonstracao.current = false;
+    setOrigemDados('carregando');
+    carregar();
+  };
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- busca inicial e atualização periódica
     carregar();
     const intervalo = setInterval(carregar, 30_000);
     return () => clearInterval(intervalo);
@@ -74,12 +146,12 @@ export default function App() {
       p1Unassigned: tickets.filter((t) => t.priority === 'P1' && t.assignee.isUnassigned).length,
       p1Active: tickets.filter((t) => t.priority === 'P1').length,
       slaBreached: tickets.filter((t) => t.slaMinutesRemaining < 0).length,
-      slaAtRisk: tickets.filter((t) => t.slaMinutesRemaining >= 0 && t.slaMinutesRemaining <= 30).length,
-      stagnant10d: tickets.filter((t) => t.daysStagnant >= 10).length,
+      slaAtRisk: tickets.filter((t) => t.slaMinutesRemaining >= 0 && t.slaMinutesRemaining <= config.riskWarningMinutes).length,
+      stagnant10d: tickets.filter((t) => t.daysStagnant >= config.stagnantDaysLimit).length,
       unassigned: tickets.filter((t) => t.assignee.isUnassigned).length,
       waitingClient: tickets.filter((t) => t.status === 'Aguardando Cliente').length
     };
-  }, [tickets]);
+  }, [tickets, config.riskWarningMinutes, config.stagnantDaysLimit]);
 
   // Cumprimento de SLA: chamados de suporte (fora do backlog) dentro do prazo.
   const slaCompliance = useMemo(() => {
@@ -110,10 +182,10 @@ export default function App() {
           result = result.filter((t) => t.slaMinutesRemaining < 0);
           break;
         case 'risk':
-          result = result.filter((t) => t.slaMinutesRemaining >= 0 && t.slaMinutesRemaining <= 30);
+          result = result.filter((t) => t.slaMinutesRemaining >= 0 && t.slaMinutesRemaining <= config.riskWarningMinutes);
           break;
         case 'stagnant':
-          result = result.filter((t) => t.daysStagnant >= 10);
+          result = result.filter((t) => t.daysStagnant >= config.stagnantDaysLimit);
           break;
         case 'unassigned':
           result = result.filter((t) => t.assignee.isUnassigned);
@@ -139,10 +211,10 @@ export default function App() {
       }
     }
 
-    // Sidebar Tab Filter
+    // Sidebar Tab Filter: Atenção Imediata isolates only actionable urgency tickets
     if (activeTab === 'attention') {
       result = result.filter(
-        (t) => t.priority === 'P1' || t.slaMinutesRemaining <= 30 || t.daysStagnant >= 10 || t.assignee.isUnassigned
+        (t) => t.priority === 'P1' || t.slaMinutesRemaining <= config.riskWarningMinutes || t.daysStagnant >= config.stagnantDaysLimit || t.assignee.isUnassigned
       );
     }
 
@@ -167,18 +239,18 @@ export default function App() {
       if (a.priority === 'P1' && b.priority !== 'P1') return -1;
       if (a.priority !== 'P1' && b.priority === 'P1') return 1;
 
-      // 4. SLAs em risco iminente (<= 30 min)
-      const aAtRisk = a.slaMinutesRemaining <= 30;
-      const bAtRisk = b.slaMinutesRemaining <= 30;
+      // 4. SLAs em risco iminente (<= threshold)
+      const aAtRisk = a.slaMinutesRemaining <= config.riskWarningMinutes;
+      const bAtRisk = b.slaMinutesRemaining <= config.riskWarningMinutes;
       if (aAtRisk && !bAtRisk) return -1;
       if (!aAtRisk && bAtRisk) return 1;
       if (aAtRisk && bAtRisk) {
         return a.slaMinutesRemaining - b.slaMinutesRemaining;
       }
 
-      // 5. Chamados parados há mais de 10 dias
-      const aStagnant = a.daysStagnant >= 10;
-      const bStagnant = b.daysStagnant >= 10;
+      // 5. Chamados parados há mais de X dias
+      const aStagnant = a.daysStagnant >= config.stagnantDaysLimit;
+      const bStagnant = b.daysStagnant >= config.stagnantDaysLimit;
       if (aStagnant && !bStagnant) return -1;
       if (!aStagnant && bStagnant) return 1;
       if (aStagnant && bStagnant) {
@@ -197,19 +269,20 @@ export default function App() {
       // Por fim, menor tempo de SLA restante
       return a.slaMinutesRemaining - b.slaMinutesRemaining;
     });
-  }, [tickets, cardFilter, activeTab, ticketDestaque]);
+  }, [tickets, cardFilter, activeTab, ticketDestaque, config.riskWarningMinutes, config.stagnantDaysLimit]);
 
   return (
     <div className="ops-dashboard-layout">
       {/* 1. Left Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        criticalCount={metrics.p1Active + metrics.slaBreached}
+        setActiveTab={handleTabChange}
+        criticalCount={metrics.p1Active + metrics.slaBreached + metrics.slaAtRisk}
         totalTickets={tickets.length}
         slaCompliance={slaCompliance}
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -231,8 +304,17 @@ export default function App() {
           {origemDados !== 'supabase' && (
             <div className="active-filter-alert-bar">
               <span className="active-filter-text">
-                {origemDados === 'carregando' ? 'Carregando chamados do Supabase…' : 'Não foi possível ler o Supabase: exibindo dados de exemplo.'}
+                {origemDados === 'carregando'
+                  ? 'Carregando chamados do Supabase…'
+                  : origemDados === 'demonstracao'
+                    ? 'Modo demonstração: exibindo dados de exemplo, sem alterar o Supabase.'
+                    : 'Não foi possível ler o Supabase: exibindo dados de exemplo.'}
               </span>
+              {origemDados === 'demonstracao' && (
+                <button className="btn-clear-active-filter" onClick={voltarAosDadosReais}>
+                  Voltar aos dados reais
+                </button>
+              )}
             </div>
           )}
           {ticketDestaque && (
@@ -246,6 +328,73 @@ export default function App() {
               </button>
             </div>
           )}
+          {/* Page Top Action Bar */}
+          <div className="ops-action-bar">
+            <div>
+              <h1 className="ops-page-heading">Operações de Suporte & SLAs</h1>
+              <span className="ops-page-subheading">
+                Fila inteligente regida pela Matriz de Prioridade (P1–P4) e Acordos de Nível de Serviço
+              </span>
+            </div>
+
+            <div className="ops-action-buttons">
+              {tickets.length === 0 ? (
+                <button 
+                  className="btn-action-outline btn-demo-action"
+                  onClick={handleLoadSampleData}
+                  title="Carregar conjunto de chamados de exemplo para testar filtros e regras"
+                >
+                  <Zap size={14} />
+                  <span>Carregar Dados de Demonstração</span>
+                </button>
+              ) : (
+                <button 
+                  className="btn-action-outline"
+                  onClick={handleClearAllData}
+                  title="Esvaziar todos os chamados da fila"
+                >
+                  <RotateCcw size={14} />
+                  <span>Limpar Fila</span>
+                </button>
+              )}
+
+              <button 
+                className="btn-action-outline"
+                onClick={() => setIsSettingsOpen(true)}
+                title="Configurar matriz de prioridades, SLAs e regras"
+              >
+                <Sliders size={15} />
+                <span>Matriz & Regras de SLA</span>
+              </button>
+
+              <button 
+                className="btn-action-primary"
+                onClick={() => setIsSettingsOpen(true)}
+                title="Cadastrar novo chamado de suporte"
+              >
+                <PlusCircle size={15} />
+                <span>Registrar Chamado</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Attention Mode Active Banner */}
+          {activeTab === 'attention' && (
+            <div className="active-filter-alert-bar" style={{ backgroundColor: '#fef2f2', borderColor: '#fca5a5', color: '#991b1b' }}>
+              <span className="active-filter-text">
+                <AlertTriangle size={16} /> Modo Ativo:{' '}
+                <strong>Atenção Imediata</strong> — isolando apenas os casos críticos ({filteredAndSortedTickets.length} de {tickets.length} chamados). Chamados estáveis P3/P4 estão ocultados.
+              </span>
+              <button 
+                className="btn-clear-active-filter" 
+                style={{ color: '#991b1b' }}
+                onClick={() => setActiveTab('overview')}
+              >
+                Ver todos os chamados ({tickets.length})
+              </button>
+            </div>
+          )}
+
           {/* Quick Active Filter Pill Bar */}
           {cardFilter && (
             <div className="active-filter-alert-bar">
@@ -254,8 +403,8 @@ export default function App() {
                 <strong>
                   {cardFilter === 'p1' && 'Prioridade P1'}
                   {cardFilter === 'breached' && 'SLAs Vencidos'}
-                  {cardFilter === 'risk' && 'SLAs em Risco (< 30 min)'}
-                  {cardFilter === 'stagnant' && 'Parados há mais de 10 dias'}
+                  {cardFilter === 'risk' && `SLAs em Risco (< ${config.riskWarningMinutes} min)`}
+                  {cardFilter === 'stagnant' && `Parados há mais de ${config.stagnantDaysLimit} dias`}
                   {cardFilter === 'unassigned' && 'Sem Responsável'}
                   {cardFilter === 'waiting' && 'Aguardando Cliente'}
                   {cardFilter === 'blocked' && 'Tickets Bloqueados'}
@@ -282,15 +431,19 @@ export default function App() {
             onFilterClick={handleCardFilterClick}
           />
 
-          {/* 3. Main Priority Table: ATENÇÃO IMEDIATA (Sem rolagem inicial em desktop) */}
+          {/* 3. Main Priority Table */}
           <PriorityTable
             tickets={filteredAndSortedTickets}
             totalFilteredCount={filteredAndSortedTickets.length}
+            activeTab={activeTab}
+            onClearTabFilter={() => setActiveTab('overview')}
+            onLoadSampleData={handleLoadSampleData}
+            onOpenNewTicketModal={() => setIsSettingsOpen(true)}
           />
 
           {/* 4. Team Workload Panel */}
           <TeamWorkloadPanel
-            members={members}
+            members={teamMembers}
             unassignedCount={metrics.unassigned}
             onFilterAssignee={(name) => {
               setCardFilter(name);
@@ -314,10 +467,26 @@ export default function App() {
             <span>Painel Gerencial de Operações • PREFtech Suporte Sem Espera</span>
           </div>
           <div className="footer-info">
-            <span>Classificação P1–P4 regida por Acordo de Nível de Serviço (SLA) Contratual</span>
+            <span>
+              Matriz Ativa: P1 ({config.p1SlaMinutes}m) • P2 ({config.p2SlaHours}h) • P3 ({config.p3SlaHours}h) • P4 ({config.p4SlaDays}d)
+            </span>
           </div>
         </footer>
       </div>
+
+      {/* Support Settings & Priority Matrix Modal */}
+      {/* Montado só quando aberto: o modal sorteia o número do novo chamado, o que não pode ocorrer no pré-render. */}
+      {isSettingsOpen && (
+        <SupportSettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          config={config}
+          onSaveConfig={handleSaveConfig}
+          onAddTicket={handleAddTicket}
+          onAddTeamMember={handleAddTeamMember}
+          teamMembers={teamMembers}
+        />
+      )}
     </div>
   );
 }

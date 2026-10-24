@@ -20,6 +20,7 @@ interface SidebarProps {
   slaCompliance: number;
   isOpen: boolean;
   onClose: () => void;
+  onOpenSettings?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -29,10 +30,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   totalTickets,
   slaCompliance,
   isOpen,
-  onClose
+  onClose,
+  onOpenSettings
 }) => {
   const handleNavClick = (tab: string) => {
     setActiveTab(tab);
+    if (tab === 'team') {
+      const el = document.getElementById('team-workload-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } else if (tab === 'pending') {
+      const el = document.getElementById('pending-issues-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
     if (window.innerWidth < 1024) {
       onClose();
     }
@@ -137,18 +148,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="sidebar-section-title">POLÍTICAS & SLA</div>
 
         <div className="sidebar-secondary-nav">
-          <button className="nav-item-secondary">
+          <button 
+            className="nav-item-secondary"
+            onClick={onOpenSettings}
+            title="Abrir configurações da Matriz de Prioridade e SLAs"
+          >
             <Settings size={16} />
             <span>Matriz de Prioridade (P1–P4)</span>
           </button>
-          <button className="nav-item-secondary">
+          <button 
+            className="nav-item-secondary"
+            onClick={onOpenSettings}
+            title="Abrir configurações de plantão e equipe"
+          >
             <HelpCircle size={16} />
             <span>Escala de Plantão N2/N3</span>
           </button>
         </div>
 
         {/* SLA Health Indicator Card at bottom */}
-        <div className="sidebar-health-card">
+        {/* Visual da v0.2; o percentual vem do cálculo real de SLA (App.tsx). */}
+        <div className={`sidebar-health-card ${slaCompliance < SLA_TARGET ? 'health-card-warning' : 'health-card-healthy'}`}>
           <div className="health-card-top">
             <span className="health-title">Cumprimento de SLA</span>
             <span className="health-val font-mono">{slaCompliance.toFixed(1)}%</span>
@@ -157,8 +177,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="health-bar-fill" style={{ width: `${slaCompliance}%` }} />
           </div>
           <div className="health-detail">
-            <TrendingDown size={13} className="text-critical" />
-            <span>Meta: {SLA_TARGET.toFixed(1)}% ({slaCompliance >= SLA_TARGET ? 'Dentro do target' : 'Abaixo do target'})</span>
+            {slaCompliance < SLA_TARGET ? (
+              <>
+                <TrendingDown size={13} className="text-warning" />
+                <span>Meta: {SLA_TARGET.toFixed(1)}% (Abaixo do target)</span>
+              </>
+            ) : (
+              <span>Meta: {SLA_TARGET.toFixed(1)}% (Dentro do target)</span>
+            )}
           </div>
         </div>
       </aside>

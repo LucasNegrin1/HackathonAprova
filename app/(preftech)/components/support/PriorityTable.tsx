@@ -11,12 +11,13 @@ import {
   Building2,
   Calendar,
   Layers,
-  Activity,
   GitPullRequest,
   Ban,
   Link2,
   AlertTriangle,
-  UserCheck
+  UserCheck,
+  Zap,
+  Plus
 } from 'lucide-react';
 import type { Ticket, Priority } from '../../data/mockSupportData';
 import './PriorityTable.css';
@@ -24,11 +25,19 @@ import './PriorityTable.css';
 interface PriorityTableProps {
   tickets: Ticket[];
   totalFilteredCount: number;
+  activeTab?: string;
+  onClearTabFilter?: () => void;
+  onLoadSampleData?: () => void;
+  onOpenNewTicketModal?: () => void;
 }
 
 export const PriorityTable: React.FC<PriorityTableProps> = ({ 
   tickets,
-  totalFilteredCount
+  totalFilteredCount,
+  activeTab = 'overview',
+  onClearTabFilter,
+  onLoadSampleData,
+  onOpenNewTicketModal
 }) => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -130,12 +139,34 @@ export const PriorityTable: React.FC<PriorityTableProps> = ({
       <div className="table-section-header">
         <div className="section-title-wrap">
           <div className="title-row">
-            <ShieldAlert size={18} className="text-critical" />
-            <h2 className="section-title">Atenção Imediata</h2>
-            <span className="items-count-badge font-mono">{totalFilteredCount} tickets</span>
+            {activeTab === 'attention' ? (
+              <>
+                <AlertTriangle size={18} className="text-critical" />
+                <h2 className="section-title text-critical">Fila Crítica • Atenção Imediata</h2>
+                <span className="items-count-badge badge-critical font-mono">
+                  {totalFilteredCount} crítico(s)
+                </span>
+                {onClearTabFilter && (
+                  <button 
+                    onClick={onClearTabFilter}
+                    style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textDecoration: 'underline', marginLeft: '8px', cursor: 'pointer' }}
+                  >
+                    (Voltar para Visão Geral)
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                <ShieldAlert size={18} className="text-brand" />
+                <h2 className="section-title">Fila Operacional de Chamados</h2>
+                <span className="items-count-badge font-mono">{totalFilteredCount} tickets</span>
+              </>
+            )}
           </div>
           <p className="section-subtitle">
-            Clique no chamado para expandir diagnósticos, histórico, categoria e ações do gestor
+            {activeTab === 'attention'
+              ? 'Exibindo apenas chamados P1, SLAs em risco iminente (< 30 min), estagnados (> 10 dias) ou sem responsável atribuído.'
+              : 'Clique no chamado para expandir diagnósticos técnicos, histórico e ações operacionais.'}
           </p>
         </div>
 
@@ -153,7 +184,6 @@ export const PriorityTable: React.FC<PriorityTableProps> = ({
           <div className="ops-table-header">
             <div className="grid-th col-number">Número</div>
             <div className="grid-th col-prio">Prioridade</div>
-            <div className="grid-th col-motivo">Motivo de Atenção</div>
             <div className="grid-th col-ticket-account">Chamado & Conta (Prefeitura)</div>
             <div className="grid-th col-status">Status</div>
             <div className="grid-th col-assignee">Responsável</div>
@@ -194,23 +224,7 @@ export const PriorityTable: React.FC<PriorityTableProps> = ({
                         )}
                       </div>
 
-                      {/* 3. Motivo de Atenção */}
-                      <div className="grid-td col-motivo">
-                        <span 
-                          className={`urgency-reason-pill ${
-                            ticket.slaMinutesRemaining < 0 || ticket.priority === 'P1' 
-                              ? 'reason-critical' 
-                              : ticket.daysStagnant >= 10 
-                              ? 'reason-stagnant' 
-                              : 'reason-warning'
-                          }`}
-                          title={ticket.urgencyReason}
-                        >
-                          {ticket.urgencyReason}
-                        </span>
-                      </div>
-
-                      {/* 4. Descrição do Problema & Conta (Prefeitura) */}
+                      {/* 3. Descrição do Problema & Conta (Prefeitura) */}
                       <div className="grid-td col-ticket-account">
                         <div className="ticket-title-row">
                           <span className="ticket-title-bold" title={ticket.title}>
@@ -282,15 +296,6 @@ export const PriorityTable: React.FC<PriorityTableProps> = ({
                             </span>
                             <span className="meta-block-val">
                               {ticket.category}
-                            </span>
-                          </div>
-
-                          <div className="meta-block">
-                            <span className="meta-block-label">
-                              <Activity size={13} /> Tipo de Solicitação
-                            </span>
-                            <span className="meta-block-val">
-                              {ticket.requestType}
                             </span>
                           </div>
 
@@ -390,8 +395,38 @@ export const PriorityTable: React.FC<PriorityTableProps> = ({
                 );
               })
             ) : (
-              <div className="empty-results-cell">
-                Nenhum chamado corresponde aos filtros aplicados.
+              <div className="empty-results-cell" style={{ padding: '36px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                <p style={{ fontSize: '14px', color: 'var(--text-muted)', margin: 0 }}>
+                  {activeTab === 'attention' 
+                    ? '🎉 Nenhum chamado crítico requer Atenção Imediata no momento! Todos os SLAs estão sob controle.'
+                    : 'Nenhum chamado encontrado na fila de atendimento.'}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {onLoadSampleData && (
+                    <button 
+                      onClick={onLoadSampleData}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', backgroundColor: 'var(--brand-primary)', color: '#fff', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      <Zap size={15} /> Carregar Chamados de Teste
+                    </button>
+                  )}
+                  {onOpenNewTicketModal && (
+                    <button 
+                      onClick={onOpenNewTicketModal}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-medium)', color: 'var(--text-primary)', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      <Plus size={15} /> Registrar Novo Chamado
+                    </button>
+                  )}
+                  {activeTab === 'attention' && onClearTabFilter && (
+                    <button 
+                      onClick={onClearTabFilter}
+                      style={{ padding: '8px 14px', color: 'var(--brand-primary)', fontSize: '13px', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                    >
+                      Ver Visão Geral completa
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>

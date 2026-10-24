@@ -14,7 +14,7 @@ export const TeamWorkloadPanel: React.FC<TeamWorkloadPanelProps> = ({
   onFilterAssignee
 }) => {
   return (
-    <div className="team-workload-section">
+    <div id="team-workload-section" className="team-workload-section">
       <div className="team-section-header">
         <div className="title-row">
           <Users size={17} className="text-brand" />
@@ -47,18 +47,23 @@ export const TeamWorkloadPanel: React.FC<TeamWorkloadPanelProps> = ({
               <span className="metric-col-lbl">Pendentes</span>
             </div>
             <div className="metric-col">
-              <span className="metric-col-val text-critical font-mono">1</span>
+              <span className="metric-col-val text-critical font-mono">{unassignedCount > 0 ? '-' : '0'}</span>
               <span className="metric-col-lbl">P1 Crítico</span>
             </div>
             <div className="metric-col">
-              <span className="metric-col-val text-warning font-mono">2</span>
+              <span className="metric-col-val text-warning font-mono">{unassignedCount > 0 ? '-' : '0'}</span>
               <span className="metric-col-lbl">SLA Risco</span>
             </div>
           </div>
         </div>
 
         {/* Analysts cards */}
-        {members.map((member) => {
+        {members.length === 0 ? (
+          <div className="team-member-card text-muted" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gridColumn: 'span 2', padding: '1.5rem' }}>
+            <span>Nenhum analista cadastrado na equipe.</span>
+          </div>
+        ) : (
+          members.map((member) => {
           const isOverloaded = member.activeTickets > member.capacityLimit;
           const hasBreached = member.breachedSlaTickets > 0;
           const hasP1 = member.p1Tickets > 0;
@@ -119,7 +124,7 @@ export const TeamWorkloadPanel: React.FC<TeamWorkloadPanelProps> = ({
               </div>
             </div>
           );
-        })}
+        }))}
       </div>
     </div>
   );
