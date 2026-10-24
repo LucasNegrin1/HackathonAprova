@@ -12,15 +12,84 @@ O PrefTech junta duas peças:
 | **Menos tickets** | O bot tenta resolver pela base de conhecimento antes de abrir chamado. | atendimentos resolvidos sem ticket |
 | **Abertura melhor** | O bot segue um checklist por categoria (incluindo impacto e prazo) e só abre o ticket com tudo preenchido e confirmado. | pedidos de complemento, resolução na 1ª análise |
 
-## Rodar
+## Como rodar (passo a passo)
+
+### 1. Pré-requisitos
+
+- **Node.js 20.9 ou mais novo** (testado no Node 24): https://nodejs.org
+- **Git**
+
+### 2. Baixar e instalar
 
 ```bash
+git clone https://github.com/LucasNegrin1/HackathonAprova.git
+cd HackathonAprova
 npm install
-cp .env.example .env.local   # Supabase + chave de um modelo (Groq, Grok ou Claude)
+```
+
+### 3. Escolher o modo
+
+**Modo A, demonstração (sem nenhuma conta):** pule para o passo 6. O painel mostra chamados de exemplo, e o bot faz o roteiro completo com regras por palavras-chave. Os tickets recebem um protocolo, mas não aparecem no painel, porque não há banco.
+
+**Modo B, completo (recomendado):** faça os passos 4 e 5. São duas contas gratuitas: Supabase (banco) e Groq (IA do bot).
+
+### 4. Chave da IA (Groq, gratuita)
+
+1. Crie uma conta em https://console.groq.com e gere uma chave em **API Keys**.
+2. Copie o arquivo de configuração: `cp .env.example .env.local` (no Windows: `copy .env.example .env.local`).
+3. Cole a chave em `GROQ_API_KEY` no `.env.local`.
+
+Sem essa chave, o bot também funciona, mas define título e prioridade por palavras-chave e não sugere o texto melhorado.
+
+### 5. Banco (Supabase, gratuito)
+
+1. Crie um projeto em https://supabase.com/dashboard.
+2. No `.env.local`, preencha:
+   - `NEXT_PUBLIC_SUPABASE_URL`: em **Project Settings > Data API** (ex.: `https://xxxx.supabase.co`);
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` e `SUPABASE_SECRET_KEY`: em **Project Settings > API Keys**;
+   - `SUPABASE_ACCESS_TOKEN`: crie em https://supabase.com/dashboard/account/tokens.
+3. Crie as tabelas, as regras e as prefeituras de exemplo:
+
+```bash
+node --env-file=.env.local scripts/aplicar-sql.mjs supabase/migrations/20261024120000_fluxo_triagem.sql supabase/migrations/20261024130000_sugestao_agente.sql supabase/migrations/20261024140000_rebaixar_somente_na_fila.sql supabase/migrations/20261024150000_tipo_ajuste.sql supabase/migrations/20261024160000_dominios_email.sql supabase/seed.sql
+```
+
+   Cada arquivo deve responder `OK`. Alternativa sem token: abra o **SQL Editor** do Supabase e rode cada arquivo de `supabase/migrations/`, na ordem do nome, e depois `supabase/seed.sql`.
+
+4. (Opcional) Para o painel começar com 150 chamados fictícios, importe a planilha de exemplo:
+
+```bash
+node --env-file=.env.local scripts/importar-planilha.mjs tickets_suporte_150_balanceado.xlsx
+```
+
+### 6. Rodar
+
+```bash
 npm run dev
 ```
 
-Abra `http://localhost:3000`. Sem chave de modelo, o bot roda em **modo demonstração** (roteiro fixo, com as mesmas regras). Sem Supabase, o painel mostra os dados de exemplo.
+Abra **http://localhost:3000**.
+
+### 7. O que testar
+
+1. **Painel:** cards de P1, SLA vencido e parados; clique numa linha para ver os detalhes; **Matriz & Regras de SLA** muda os limites.
+2. **Bot:** clique no botão verde no canto inferior direito e siga o roteiro (nome → funcionário ou proponente → prefeitura → descrição). Exemplo de descrição: *"O sistema de análise de processos está fora do ar desde as 9h e nenhum servidor consegue trabalhar"*. Escolha **Usar o texto sugerido**.
+3. **Resultado:** o bot mostra número, título e prioridade (P1 nesse exemplo), e o painel filtra direto no ticket novo, com o selo **Novo**.
+
+### Comandos úteis
+
+| Comando | Para quê |
+|---|---|
+| `npm run dev` | Rodar em desenvolvimento |
+| `npm run build` e `npm start` | Rodar a versão de produção |
+| `npm run test:db` | Testar as regras do banco num Postgres em memória (não precisa de Supabase) |
+| `npm run lint` | Verificar o código |
+
+### Problemas comuns
+
+- **"Porta 3000 em uso":** já há outro servidor rodando. Feche-o ou use o endereço que o terminal mostrar.
+- **Painel com o aviso "exibindo dados de exemplo":** as chaves do Supabase no `.env.local` estão vazias ou erradas. Reinicie o `npm run dev` depois de editar o arquivo.
+- **Bot demorando alguns segundos:** o plano gratuito da Groq tem limite por minuto. O bot espera e tenta de novo sozinho.
 
 ## Bot: roteiro do chamado
 
