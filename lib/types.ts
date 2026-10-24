@@ -10,13 +10,21 @@ export interface MensagemTranscript {
 
 /** Estado do roteiro do bot (lib/fluxo.ts). As respostas ficam em `dados`. */
 export interface EstadoFluxo {
-  etapa: "nome" | "prefeitura" | "perfil" | "descricao" | "encerrado";
+  etapa: "nome" | "prefeitura" | "perfil" | "descricao" | "revisao" | "complemento" | "encerrado";
   dados: {
     nome?: string;
     conta?: string;
     descricao?: string;
     /** Já pediu "me conte mais" sobre a descrição. */
     pediuMais?: boolean;
+    /** Título, prioridade e texto sugerido pelo modelo, à espera da aprovação do usuário. */
+    classificacao?: {
+      titulo: string;
+      prioridade: "P1" | "P2" | "P3" | "P4";
+      motivo: string;
+      textoSugerido: string | null;
+      faltando: string[];
+    };
   };
 }
 

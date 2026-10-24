@@ -70,24 +70,74 @@ export async function conduzir(conversa: Conversa, entrada: EntradaUsuario): Pro
         return { textos: ["Me conte mais sobre o problema: o que você estava fazendo, o que aparece na tela e desde quando acontece."] };
       }
       d.descricao = d.descricao ? `${d.descricao}\n${texto}` : texto;
+      return sugerirTexto(conversa);
+    }
 
-      const perfil = conversa.perfil === "analista_prefeitura" ? "funcionário da prefeitura" : "proponente";
-      const classificacao = await classificarProblema(d.descricao, perfil);
-      const resultado = await abrirChamado(conversa, {
-        nome: d.nome!,
-        conta: d.conta!,
-        titulo: classificacao.titulo,
-        descricao: d.descricao,
-        prioridade: classificacao.prioridade,
-        motivo: classificacao.motivo,
-      });
-      fluxo.etapa = "encerrado";
-      return { textos: [mensagemDoResultado(resultado, classificacao.titulo)] };
+    case "revisao": {
+      const c = d.classificacao!;
+      const escolha = escolherOpcao(texto, OPCOES_REVISAO);
+      if (escolha === 0) return registrar(conversa, c.textoSugerido!, d.descricao);
+      if (escolha === 1) return registrar(conversa, d.descricao!);
+      if (escolha === 2) {
+        fluxo.etapa = "complemento";
+        return { textos: [`Escreva o que quer acrescentar${c.faltando.length ? ` (por exemplo: ${c.faltando.join("; ").toLowerCase()})` : ""}:`] };
+      }
+      // Texto livre em vez de botão: vale como complemento do relato.
+      d.descricao = `${d.descricao}\n${texto}`;
+      return sugerirTexto(conversa);
+    }
+
+    case "complemento": {
+      d.descricao = `${d.descricao}\n${texto}`;
+      return sugerirTexto(conversa);
     }
 
     default:
       return { textos: ['Este atendimento já foi encerrado. Clique em "Novo atendimento" para abrir outro chamado.'] };
   }
+}
+
+const OPCOES_REVISAO = ["Usar o texto sugerido", "Manter o meu texto", "Quero completar"];
+
+/**
+ * O modelo organiza o relato e aponta o que falta. O usuário aprova o texto antes de ele ir para o ticket.
+ * Sem modelo (ou se ele falhar), registra direto com o texto original.
+ */
+async function sugerirTexto(conversa: Conversa): Promise<Resposta> {
+  const fluxo = conversa.fluxo!;
+  const d = fluxo.dados;
+  const perfil = conversa.perfil === "analista_prefeitura" ? "funcionário da prefeitura" : "proponente";
+  d.classificacao = await classificarProblema(d.descricao!, perfil);
+  if (!d.classificacao.textoSugerido) return registrar(conversa, d.descricao!);
+
+  fluxo.etapa = "revisao";
+  const falta = d.classificacao.faltando.length
+    ? `\n\nPara o suporte resolver mais rápido, ainda faltaria:\n${d.classificacao.faltando.map((f) => `• ${f}`).join("\n")}`
+    : "";
+  return {
+    textos: [
+      `Organizei o seu relato para o time de suporte entender mais rápido:\n\n${d.classificacao.textoSugerido}${falta}`,
+      "Posso usar este texto no chamado?",
+    ],
+    opcoes: OPCOES_REVISAO,
+  };
+}
+
+async function registrar(conversa: Conversa, descricao: string, relatoOriginal?: string): Promise<Resposta> {
+  const fluxo = conversa.fluxo!;
+  const d = fluxo.dados;
+  const c = d.classificacao!;
+  const resultado = await abrirChamado(conversa, {
+    nome: d.nome!,
+    conta: d.conta!,
+    titulo: c.titulo,
+    descricao,
+    relatoOriginal,
+    prioridade: c.prioridade,
+    motivo: c.motivo,
+  });
+  fluxo.etapa = "encerrado";
+  return { textos: [mensagemDoResultado(resultado, c.titulo)] };
 }
 
 function primeiroNome(nome: string) {

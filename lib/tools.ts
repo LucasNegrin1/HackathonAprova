@@ -10,6 +10,8 @@ export interface DadosChamado {
   conta: string;
   titulo: string;
   descricao: string;
+  /** Relato como o usuário escreveu, guardado quando ele aprova o texto sugerido. */
+  relatoOriginal?: string;
   prioridade: CodigoPrioridade;
   motivo: string;
 }
@@ -19,7 +21,7 @@ export interface ChamadoAberto extends ResultadoChamado {
 }
 
 export async function abrirChamado(conversa: Conversa, d: DadosChamado): Promise<ChamadoAberto> {
-  const faltando = Object.entries(d).filter(([, v]) => !v);
+  const faltando = Object.entries(d).filter(([k, v]) => k !== "relatoOriginal" && !v);
   if (faltando.length) throw new Error(`dados incompletos: ${faltando.map(([k]) => k).join(", ")}`);
   if (conversa.ticketId) throw new Error(`chamado ${conversa.ticketId} já aberto`);
 
@@ -37,7 +39,7 @@ export async function abrirChamado(conversa: Conversa, d: DadosChamado): Promise
           categoria: "Bot de atendimento",
           titulo: d.titulo,
           descricao: d.descricao,
-          campos: { prioridade_bot: d.prioridade, motivo: d.motivo },
+          campos: { prioridade_bot: d.prioridade, motivo: d.motivo, ...(d.relatoOriginal ? { relato_original: d.relatoOriginal } : {}) },
           tipo: regra.tipo,
           impactoSugerido: regra.impacto,
           urgenciaSugerida: regra.urgencia,

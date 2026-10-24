@@ -35,7 +35,8 @@ Roteiro fixo, conduzido pelo código (`lib/fluxo.ts`):
    - **P2 Alto:** precisa de atenção logo;
    - **P3 Médio;**
    - **P4 Solicitação nova** no sistema.
-6. O ticket é **registrado na hora** no Supabase e passa pelas regras do banco: parecido com chamado aberto → vinculado ao pai; cota de P1 por prefeitura → revisão do gestor. O bot mostra número, título e prioridade, e o painel exibe o ticket novo na hora.
+6. **Texto sugerido:** o modelo reescreve o relato em linhas curtas (o que acontece, onde, mensagem de erro, desde quando, quem é afetado), só com o que o usuário disse, e lista até 3 informações que faltam. O usuário escolhe **Usar o texto sugerido**, **Manter o meu texto** ou **Quero completar** (acrescenta e o bot sugere de novo). O relato original fica guardado no ticket.
+7. O ticket é **registrado na hora** no Supabase e passa pelas regras do banco: parecido com chamado aberto → vinculado ao pai; cota de P1 por prefeitura → revisão do gestor. O bot mostra número, título e prioridade, e o painel exibe o ticket novo na hora.
 
 O prompt do modelo é o [`INSTRUCTIONS.md`](INSTRUCTIONS.md), com a definição de cada prioridade.
 
