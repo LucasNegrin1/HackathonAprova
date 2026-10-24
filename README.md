@@ -27,8 +27,8 @@ Abra `http://localhost:3000`. Sem chave de modelo, o bot roda em **modo demonstr
 Roteiro fixo, conduzido pelo código (`lib/fluxo.ts`):
 
 1. **Nome.**
-2. **Prefeitura**, com botões vindos do Supabase. Com `data-conta` no widget, esta etapa é pulada.
-3. **Funcionário da prefeitura ou proponente**, com botões.
+2. **Funcionário da prefeitura ou proponente**, com botões.
+3. **Prefeitura:** o funcionário escolhe numa lista vinda do Supabase; o proponente informa a cidade do processo. Com `data-conta` no widget, esta etapa é pulada.
 4. **Descrição do problema**, em texto livre. Com menos de 12 palavras, o bot pede "me conte mais" uma vez e junta os dois textos.
 5. O modelo lê a descrição e define o **título** e a **prioridade**. Sem modelo, valem palavras-chave (`lib/catalogo.ts`):
    - **P1 Crítico:** mexer na hora (operação parada);

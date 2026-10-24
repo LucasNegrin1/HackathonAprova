@@ -5,7 +5,8 @@ import { abrirChamado, type ChamadoAberto } from "./tools";
 import type { Conversa } from "./types";
 
 // Roteiro fixo do bot, conduzido pelo código:
-//   nome → prefeitura → funcionário ou proponente → descrição livre → título e prioridade → ticket registrado.
+//   nome → funcionário ou proponente → prefeitura (lista para funcionário; cidade para proponente)
+//   → descrição livre → texto sugerido → ticket registrado.
 // O modelo só lê a descrição e devolve título e prioridade (lib/interpretacao.ts).
 
 export interface Resposta {
@@ -35,31 +36,39 @@ export async function conduzir(conversa: Conversa, entrada: EntradaUsuario): Pro
       if (!/\p{L}{2,}/u.test(nome)) return { textos: ["Qual é o seu nome?"] };
       d.nome = nome;
       conversa.contato = nome;
-      // Site de prefeitura que instalou o widget com data-conta: a prefeitura já é conhecida.
-      if (conversa.conta) {
-        d.conta = conversa.conta;
-        return perguntarPerfil(conversa, `Obrigado, ${primeiroNome(nome)}!`);
-      }
-      fluxo.etapa = "prefeitura";
-      const contas = await prefeituras();
-      return { textos: [`Obrigado, ${primeiroNome(nome)}! De qual prefeitura é o atendimento?`], opcoes: contas };
-    }
-
-    case "prefeitura": {
-      const contas = await prefeituras();
-      const i = escolherOpcao(texto, contas);
-      const conta = i !== null ? contas[i] : texto.replace(/^prefeitura de /i, "").trim();
-      if (!/\p{L}{2,}/u.test(conta)) return { textos: ["De qual prefeitura é o atendimento?"], opcoes: contas };
-      d.conta = conta;
-      return perguntarPerfil(conversa);
+      return perguntarPerfil(conversa, `Obrigado, ${primeiroNome(nome)}!`);
     }
 
     case "perfil": {
       const i = escolherOpcao(texto, PERFIS) ?? (/funcion|servidor|prefeitura|analista/i.test(texto) ? 0 : /propon|requerente|cidad|engenheir|arquitet/i.test(texto) ? 1 : null);
       if (i === null) return { textos: ["Você é funcionário da prefeitura ou proponente?"], opcoes: [...PERFIS] };
       conversa.perfil = i === 0 ? "analista_prefeitura" : "municipe";
-      fluxo.etapa = "descricao";
-      return { textos: ["Descreva o problema que está ocorrendo:"] };
+
+      // Site de prefeitura que instalou o widget com data-conta: a prefeitura já é conhecida.
+      if (conversa.conta) {
+        d.conta = conversa.conta;
+        return perguntarDescricao(conversa);
+      }
+      fluxo.etapa = "prefeitura";
+      // Funcionário escolhe a prefeitura na lista; proponente informa a cidade do processo.
+      if (conversa.perfil === "analista_prefeitura") {
+        return { textos: ["De qual prefeitura você é?"], opcoes: await prefeituras() };
+      }
+      return { textos: ["De qual cidade é o seu processo?"] };
+    }
+
+    case "prefeitura": {
+      const contas = await prefeituras();
+      const i = escolherOpcao(texto, contas);
+      const conta = i !== null ? contas[i] : texto.replace(/^prefeitura de /i, "").trim();
+      // Resposta negativa ou vaga ("não sou", "não sei") não vira nome de cidade.
+      if (!/\p{L}{2,}/u.test(conta) || /^(n[aã]o|nenhum|nenhuma|sei la)\b/i.test(conta)) {
+        return conversa.perfil === "analista_prefeitura"
+          ? { textos: ["De qual prefeitura você é?"], opcoes: contas }
+          : { textos: ["De qual cidade é o seu processo?"] };
+      }
+      d.conta = conta;
+      return perguntarDescricao(conversa);
     }
 
     case "descricao": {
@@ -146,6 +155,11 @@ function primeiroNome(nome: string) {
 
 async function prefeituras(): Promise<string[]> {
   return supabaseConfigurado() ? listarContas() : [];
+}
+
+function perguntarDescricao(conversa: Conversa): Resposta {
+  conversa.fluxo!.etapa = "descricao";
+  return { textos: ["Descreva o problema que está ocorrendo:"] };
 }
 
 function perguntarPerfil(conversa: Conversa, prefixo?: string): Resposta {
