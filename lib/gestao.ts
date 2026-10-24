@@ -1,5 +1,6 @@
 import type { Priority, RequestType, TeamMember, Ticket, TicketStatus } from "@/app/(preftech)/data/mockSupportData";
 import { MOCK_TEAM_MEMBERS } from "@/app/(preftech)/data/mockSupportData";
+import { categoriaPorId } from "./catalogo";
 import { supabase } from "./supabase";
 
 // Dados reais do Supabase no formato do painel gerencial PrefTech (app/gestao).
@@ -31,6 +32,7 @@ interface Linha {
   titulo: string;
   descricao: string | null;
   categoria: string | null;
+  canal: string;
   tipo: string | null;
   status: string;
   prioridade: Priority | null;
@@ -76,7 +78,8 @@ function paraTicket(c: Linha, agora: number): Ticket {
     number: c.protocolo,
     title: c.titulo,
     account: c.contas?.nome ?? "Conta não identificada",
-    category: c.categoria ?? "Sem categoria",
+    // Tickets do bot guardam o id da categoria do checklist; os importados, o assunto da planilha.
+    category: categoriaPorId(c.categoria ?? undefined)?.nome ?? c.categoria ?? "Sem categoria",
     priority: prioridade,
     requestType: tipoDeSolicitacao(c.tipo, prioridade),
     createdAt: new Date(c.criado_em).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).replace(",", ""),
@@ -94,6 +97,7 @@ function paraTicket(c: Linha, agora: number): Ticket {
     isSimilarOrChild: c.status === "vinculado" || undefined,
     parentTicketNumber: c.pai?.protocolo,
     unprioritized: c.prioridade === null || undefined,
+    isNewFromBot: (c.canal === "chat" && agora - new Date(c.criado_em).getTime() < 86_400_000) || undefined,
     needsManagerReview: revisao ? true : undefined,
     managerReviewReason: revisao,
   };
@@ -109,7 +113,7 @@ export async function dadosGestao(): Promise<{ tickets: Ticket[]; members: TeamM
   const { data, error } = await supabase()
     .from("chamados")
     .select(
-      "id, protocolo, titulo, descricao, categoria, tipo, status, prioridade, impacto_efetivo, urgencia, responsavel, volume_grupo, justificativa_p1, motivo_ajuste, escalado_em, criado_em, ultima_movimentacao_em, contas(nome), pai:chamado_pai_id(protocolo)",
+      "id, protocolo, titulo, descricao, categoria, canal, tipo, status, prioridade, impacto_efetivo, urgencia, responsavel, volume_grupo, justificativa_p1, motivo_ajuste, escalado_em, criado_em, ultima_movimentacao_em, contas(nome), pai:chamado_pai_id(protocolo)",
     )
     .in("status", ["aberto", "na_fila", "em_atendimento", "aguardando_cliente", "vinculado", "backlog_produto"]);
   if (error) throw error;

@@ -182,6 +182,7 @@ export const PriorityTable: React.FC<PriorityTableProps> = ({
                       {/* 1. Número */}
                       <div className="grid-td col-number">
                         <span className="ticket-number-link font-mono">{ticket.number}</span>
+                        {ticket.isNewFromBot && <span className="ticket-new-badge">Novo</span>}
                       </div>
 
                       {/* 2. Prioridade */}

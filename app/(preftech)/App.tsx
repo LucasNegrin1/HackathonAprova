@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Sidebar } from './components/support/Sidebar';
 import { MetricsTopCards } from './components/support/MetricsTopCards';
 import { PriorityTable } from './components/support/PriorityTable';
@@ -22,28 +22,46 @@ export default function App() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [origemDados, setOrigemDados] = useState<'carregando' | 'supabase' | 'exemplo'>('carregando');
 
-  useEffect(() => {
-    const carregar = async () => {
-      try {
-        const r = await fetch('/api/gestao', { cache: 'no-store' });
-        if (!r.ok) throw new Error(String(r.status));
-        const dados = (await r.json()) as { tickets: Ticket[]; members: TeamMember[] };
-        setTickets(dados.tickets);
-        setMembers(dados.members);
-        setOrigemDados('supabase');
-      } catch {
-        setTickets(MOCK_TICKETS);
-        setMembers(MOCK_TEAM_MEMBERS);
-        setOrigemDados('exemplo');
-      }
-    };
-    carregar();
-    const intervalo = setInterval(carregar, 30_000);
-    return () => clearInterval(intervalo);
-  }, []);
   const [activeTab, setActiveTab] = useState('overview');
   const [cardFilter, setCardFilter] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Ticket recém-criado pelo bot: a tabela mostra só ele até o usuário pedir "Ver todos".
+  const [ticketDestaque, setTicketDestaque] = useState<string | null>(null);
+
+  const carregar = useCallback(async () => {
+    try {
+      const r = await fetch('/api/gestao', { cache: 'no-store' });
+      if (!r.ok) throw new Error(String(r.status));
+      const dados = (await r.json()) as { tickets: Ticket[]; members: TeamMember[] };
+      setTickets(dados.tickets);
+      setMembers(dados.members);
+      setOrigemDados('supabase');
+    } catch {
+      setTickets(MOCK_TICKETS);
+      setMembers(MOCK_TEAM_MEMBERS);
+      setOrigemDados('exemplo');
+    }
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- busca inicial e atualização periódica
+    carregar();
+    const intervalo = setInterval(carregar, 30_000);
+    return () => clearInterval(intervalo);
+  }, [carregar]);
+
+  // O chat do bot (iframe /widget) avisa quando cria um ticket: recarrega e mostra o ticket na hora.
+  useEffect(() => {
+    const aoReceber = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || e.data?.tipo !== 'aprova-ticket-criado') return;
+      setTicketDestaque(String(e.data.protocolo));
+      setCardFilter(null);
+      carregar();
+    };
+    window.addEventListener('message', aoReceber);
+    return () => window.removeEventListener('message', aoReceber);
+  }, [carregar]);
 
   // Metrics Data Calculation
   const metrics = useMemo(() => {
@@ -77,6 +95,10 @@ export default function App() {
   // Managerial Ranking and Filtering
   const filteredAndSortedTickets = useMemo(() => {
     let result = [...tickets];
+
+    if (ticketDestaque) {
+      return result.filter((t) => t.number === ticketDestaque);
+    }
 
     // Card Specific Filter
     if (cardFilter) {
@@ -175,7 +197,7 @@ export default function App() {
       // Por fim, menor tempo de SLA restante
       return a.slaMinutesRemaining - b.slaMinutesRemaining;
     });
-  }, [tickets, cardFilter, activeTab]);
+  }, [tickets, cardFilter, activeTab, ticketDestaque]);
 
   return (
     <div className="ops-dashboard-layout">
@@ -211,6 +233,17 @@ export default function App() {
               <span className="active-filter-text">
                 {origemDados === 'carregando' ? 'Carregando chamados do Supabase…' : 'Não foi possível ler o Supabase: exibindo dados de exemplo.'}
               </span>
+            </div>
+          )}
+          {ticketDestaque && (
+            <div className="active-filter-alert-bar">
+              <span className="active-filter-text">
+                <Filter size={14} /> Ticket <strong>{ticketDestaque}</strong> criado pelo bot
+                {filteredAndSortedTickets.length === 0 && ' (carregando…)'}
+              </span>
+              <button className="btn-clear-active-filter" onClick={() => setTicketDestaque(null)}>
+                Ver todos
+              </button>
             </div>
           )}
           {/* Quick Active Filter Pill Bar */}

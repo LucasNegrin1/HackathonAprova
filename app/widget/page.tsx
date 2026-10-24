@@ -83,6 +83,10 @@ export default function Widget() {
       setBolhas((b) => [...b, ...dados.respostas!.map((t) => ({ de: "agente" as const, texto: t }))]);
       setEstado(dados.estado!);
       setOpcoes(dados.opcoes ?? []);
+      // Avisa a página onde o chat está (o painel PrefTech) para mostrar o ticket na hora.
+      if (dados.estado?.ticketId && dados.estado.ticketId !== estado?.ticketId) {
+        window.parent?.postMessage({ tipo: "aprova-ticket-criado", protocolo: dados.estado.ticketId }, "*");
+      }
     } catch (e) {
       setBolhas((b) => [...b, { de: "agente", texto: (e as Error).message || "Não consegui falar com o servidor. Tente de novo em instantes." }]);
     } finally {

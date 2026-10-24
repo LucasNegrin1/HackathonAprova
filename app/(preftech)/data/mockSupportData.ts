@@ -32,6 +32,8 @@ export interface Ticket {
   managerReviewReason?: string;
   /** Chamado ainda sem prioridade definida (veio assim da origem). `priority` fica P4 só para a ordenação. */
   unprioritized?: boolean;
+  /** Aberto pelo bot de atendimento nas últimas 24h. */
+  isNewFromBot?: boolean;
 }
 
 export interface TeamMember {

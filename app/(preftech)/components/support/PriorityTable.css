@@ -682,3 +682,17 @@
     grid-template-columns: 80px 60px 160px minmax(200px, 1fr) 120px 150px 130px 40px;
   }
 }
+
+/* Selo dos tickets abertos pelo bot nas últimas 24h */
+.ticket-new-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--brand-teal-light);
+  color: var(--success-text);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
