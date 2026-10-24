@@ -46,11 +46,12 @@ interface Linha {
   criado_em: string;
   ultima_movimentacao_em: string;
   contas: { nome: string } | null;
-  pai: { protocolo: string } | null;
+  pai: { protocolo: string; prioridade: Priority | null } | null;
 }
 
 function paraTicket(c: Linha, agora: number): Ticket {
-  const prioridade: Priority = c.prioridade ?? "P4";
+  // Vinculado não tem prioridade própria: segue a do chamado-pai.
+  const prioridade: Priority = c.prioridade ?? c.pai?.prioridade ?? "P4";
   const ultima = new Date(c.ultima_movimentacao_em).getTime();
   const dias = Math.floor((agora - ultima) / 86_400_000);
   const backlog = c.status === "backlog_produto";
@@ -96,7 +97,7 @@ function paraTicket(c: Linha, agora: number): Ticket {
     backlogIssueKey: backlog ? c.protocolo : undefined,
     isSimilarOrChild: c.status === "vinculado" || undefined,
     parentTicketNumber: c.pai?.protocolo,
-    unprioritized: c.prioridade === null || undefined,
+    unprioritized: (c.prioridade === null && !c.pai?.prioridade) || undefined,
     isNewFromBot: (c.canal === "chat" && agora - new Date(c.criado_em).getTime() < 86_400_000) || undefined,
     needsManagerReview: revisao ? true : undefined,
     managerReviewReason: revisao,
@@ -113,7 +114,7 @@ export async function dadosGestao(): Promise<{ tickets: Ticket[]; members: TeamM
   const { data, error } = await supabase()
     .from("chamados")
     .select(
-      "id, protocolo, titulo, descricao, categoria, canal, campos, tipo, status, prioridade, impacto_efetivo, urgencia, responsavel, volume_grupo, justificativa_p1, motivo_ajuste, escalado_em, criado_em, ultima_movimentacao_em, contas(nome), pai:chamado_pai_id(protocolo)",
+      "id, protocolo, titulo, descricao, categoria, canal, campos, tipo, status, prioridade, impacto_efetivo, urgencia, responsavel, volume_grupo, justificativa_p1, motivo_ajuste, escalado_em, criado_em, ultima_movimentacao_em, contas(nome), pai:chamado_pai_id(protocolo, prioridade)",
     )
     .in("status", ["aberto", "na_fila", "em_atendimento", "aguardando_cliente", "vinculado", "backlog_produto"]);
   if (error) throw error;

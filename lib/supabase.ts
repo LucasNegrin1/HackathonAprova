@@ -98,18 +98,21 @@ export async function gravarChamadoSupabase(c: NovoChamado): Promise<ResultadoCh
 
   const { data: final, error: erroLeitura } = await supabase()
     .from("chamados")
-    .select("protocolo, status, prioridade, justificativa_p1, pai:chamado_pai_id(protocolo)")
+    .select("protocolo, status, prioridade, justificativa_p1, pai:chamado_pai_id(protocolo, prioridade)")
     .eq("id", data.id)
     .single();
   if (erroLeitura) throw erroLeitura;
-  const lido = final as unknown as { protocolo: string; status: string; prioridade: string | null; justificativa_p1: string | null; pai: { protocolo: string } | null };
-  return { protocolo: lido.protocolo, status: lido.status, prioridade: lido.prioridade, pai: lido.pai?.protocolo ?? null, revisarP1: Boolean(lido.justificativa_p1) };
+  const lido = final as unknown as { protocolo: string; status: string; prioridade: string | null; justificativa_p1: string | null; pai: { protocolo: string; prioridade: string | null } | null };
+  // Vinculado não tem prioridade própria: segue a do chamado-pai.
+  return { protocolo: lido.protocolo, status: lido.status, prioridade: lido.prioridade ?? lido.pai?.prioridade ?? null, pai: lido.pai?.protocolo ?? null, revisarP1: Boolean(lido.justificativa_p1) };
 }
 
 const GENERICAS = new Set([
   "para", "como", "pois", "esta", "sobre", "mais", "quando", "onde", "isso", "esse", "essa", "favor", "obrigado", "obrigada",
   "processo", "processos", "sistema", "aprova", "prefeitura", "solicito", "solicitacao", "preciso", "gostaria", "estamos", "temos",
   "erro", "problema", "categoria", "dados", "coletados", "artigos",
+  // Rótulos do texto sugerido pelo bot: aparecem em todo ticket e não indicam semelhança.
+  "acontece", "quem", "afetado", "afetados", "desde", "tentado", "mensagem", "onde", "tela", "modulo", "usuario", "usuarios",
 ]);
 
 function palavras(texto: string) {
@@ -136,9 +139,10 @@ async function chamadoParecido(id: string, contaId: string, c: NovoChamado): Pro
     .map((o) => {
       const noTitulo = [...palavras(o.titulo)].filter((p) => titulo.has(p)).length;
       const noCorpo = [...palavras((o.descricao ?? "").slice(0, 400))].filter((p) => corpo.has(p)).length;
-      return { id: o.id as string, noTitulo, pontos: 2 * noTitulo + noCorpo + (o.conta_id === contaId ? 1 : 0) };
+      return { id: o.id as string, mesmaConta: o.conta_id === contaId, noTitulo, pontos: 2 * noTitulo + noCorpo };
     })
-    .filter((r) => r.noTitulo >= 2 && r.pontos >= 7)
+    // Só vincula sozinho dentro da mesma prefeitura e com semelhança alta no título.
+    .filter((r) => r.mesmaConta && r.noTitulo >= 2 && r.pontos >= 8)
     .sort((a, b) => b.pontos - a.pontos)[0];
   return melhor ? { id: melhor.id } : null;
 }
