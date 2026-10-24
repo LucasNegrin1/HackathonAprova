@@ -37,6 +37,7 @@ export default function Widget() {
   const [imagem, setImagem] = useState<Imagem | null>(null);
   const [digitando, setDigitando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [opcoes, setOpcoes] = useState<string[]>([]);
   const fim = useRef<HTMLDivElement>(null);
   const arquivo = useRef<HTMLInputElement>(null);
 
@@ -50,11 +51,10 @@ export default function Widget() {
   }, [bolhas, digitando]);
 
   const encerrado = estado !== null && estado.status !== "em_atendimento";
-  const ultima = bolhas.at(-1);
-  const pedeSimNao = !encerrado && ultima?.de === "agente" && /\*sim\*|sim ou|resolveu|funcionou|posso abrir/i.test(ultima.texto);
 
   function novoAtendimento() {
     setEstado(null);
+    setOpcoes([]);
     setBolhas([{ de: "agente", texto: "Pode me contar a nova dúvida ou problema." }]);
   }
 
@@ -65,6 +65,7 @@ export default function Widget() {
     setTexto("");
     setImagem(null);
     setErro(null);
+    setOpcoes([]);
     setDigitando(true);
     try {
       const r = await fetch("/api/chat", {
@@ -72,16 +73,16 @@ export default function Widget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           conversaId: encerrado ? undefined : estado?.id,
-          perfil: "municipe",
           texto: mensagem,
           imagem: anexo ? { base64: anexo.base64, mediaType: anexo.mediaType } : undefined,
           site: { conta },
         }),
       });
-      const dados = (await r.json()) as { respostas?: string[]; estado?: Estado; erro?: string };
+      const dados = (await r.json()) as { respostas?: string[]; opcoes?: string[]; estado?: Estado; erro?: string };
       if (!r.ok || !dados.respostas) throw new Error(dados.erro);
       setBolhas((b) => [...b, ...dados.respostas!.map((t) => ({ de: "agente" as const, texto: t }))]);
       setEstado(dados.estado!);
+      setOpcoes(dados.opcoes ?? []);
     } catch (e) {
       setBolhas((b) => [...b, { de: "agente", texto: (e as Error).message || "Não consegui falar com o servidor. Tente de novo em instantes." }]);
     } finally {
@@ -143,10 +144,11 @@ export default function Widget() {
         <div ref={fim} />
       </div>
 
-      {pedeSimNao && (
-        <div className="flex gap-2 border-t border-slate-100 px-3 pt-2">
-          {["Sim", "Não"].map((r) => (
-            <button key={r} onClick={() => enviar(r)} className="rounded-full px-4 py-1 text-sm text-emerald-800 ring-1 ring-emerald-700">
+      {/* Respostas rápidas sugeridas pelo fluxo (perfil, "resolveu?", confirmação). */}
+      {!encerrado && opcoes.length > 0 && (
+        <div className="flex flex-wrap gap-2 border-t border-slate-100 px-3 pt-2">
+          {opcoes.map((r) => (
+            <button key={r} onClick={() => enviar(r)} disabled={digitando} className="rounded-full px-3 py-1 text-sm text-emerald-800 ring-1 ring-emerald-700 hover:bg-emerald-50 disabled:opacity-50">
               {r}
             </button>
           ))}

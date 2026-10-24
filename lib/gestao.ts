@@ -6,7 +6,7 @@ import { supabase } from "./supabase";
 // O painel continua com os tipos originais; só a origem dos dados mudou (antes: mockSupportData).
 
 // SLA da próxima ação, contado da última movimentação do chamado.
-const SLA_HORAS: Record<Priority, number> = { P1: 4, P2: 8, P3: 24, P4: 72 };
+export const SLA_HORAS: Record<Priority, number> = { P1: 4, P2: 8, P3: 24, P4: 72 };
 
 const SEM_SLA = 1_000_000_000;
 

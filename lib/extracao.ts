@@ -15,8 +15,18 @@ export function extrairIdentificadores(texto: string): { id: string; valor: stri
   return achados;
 }
 
-/** "20/11", "20/11/2026" → "2026-11-20". Sem data reconhecível → "". */
+/** "20/11", "20/11/2026", "hoje", "amanhã" → "AAAA-MM-DD". Sem data reconhecível → "". */
 export function dataIso(texto = ""): string {
+  const relativo = texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .match(/\b(depois de amanha|amanha|hoje)\b/)?.[1];
+  if (relativo) {
+    const dias = { hoje: 0, amanha: 1, "depois de amanha": 2 }[relativo]!;
+    const data = new Date(Date.now() + dias * 86_400_000);
+    return data.toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
+  }
   const m = texto.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/);
   if (!m) return "";
   const ano = m[3] ? (m[3].length === 2 ? `20${m[3]}` : m[3]) : String(new Date().getFullYear());

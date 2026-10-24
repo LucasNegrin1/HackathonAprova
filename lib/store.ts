@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import type { Canal, Conversa, Db, Perfil, Ticket } from "./types";
+import type { Canal, Conversa, Db, Perfil } from "./types";
 
 // Persistência simples para o hackathon: memória + arquivo JSON local.
 // Em ambiente sem disco gravável (ex.: Vercel) o arquivo falha em silêncio e fica só a memória.
@@ -10,7 +10,7 @@ const g = globalThis as unknown as { __aprovaDb?: Db };
 
 function carregar(): Db {
   if (g.__aprovaDb) return g.__aprovaDb;
-  let db: Db = { conversas: {}, tickets: {}, sequencia: 0 };
+  let db: Db = { conversas: {}, sequencia: 0 };
   try {
     db = JSON.parse(fs.readFileSync(ARQUIVO, "utf8")) as Db;
   } catch {
@@ -36,16 +36,6 @@ export function buscarConversa(id: string): Conversa | undefined {
   return carregar().conversas[id];
 }
 
-/** Conversa ativa do contato no canal, ou uma nova. */
-export function conversaDoContato(canal: Canal, contato: string, perfil: Perfil): Conversa {
-  const db = carregar();
-  const ativa = Object.values(db.conversas).find(
-    (c) => c.canal === canal && c.contato === contato && c.status === "em_atendimento",
-  );
-  if (ativa) return ativa;
-  return novaConversa(canal, contato, perfil);
-}
-
 export function novaConversa(canal: Canal, contato: string, perfil: Perfil): Conversa {
   const db = carregar();
   const conversa: Conversa = {
@@ -56,7 +46,6 @@ export function novaConversa(canal: Canal, contato: string, perfil: Perfil): Con
     criadaEm: agora(),
     atualizadaEm: agora(),
     status: "em_atendimento",
-    mensagens: [],
     transcript: [],
     turnosUsuario: 0,
     campos: {},
@@ -72,24 +61,3 @@ export function proximoProtocolo(): string {
   return `APV-${new Date().getFullYear()}-${String(db.sequencia).padStart(5, "0")}`;
 }
 
-export function gravarTicket(ticket: Ticket) {
-  carregar().tickets[ticket.id] = ticket;
-  salvar();
-}
-
-export function listarTickets(): Ticket[] {
-  return Object.values(carregar().tickets).sort((a, b) => b.criadoEm.localeCompare(a.criadoEm));
-}
-
-export function listarConversas(): Conversa[] {
-  return Object.values(carregar().conversas);
-}
-
-export function buscarTicket(id: string): Ticket | undefined {
-  return carregar().tickets[id];
-}
-
-export function limparTudo() {
-  g.__aprovaDb = { conversas: {}, tickets: {}, sequencia: 0 };
-  salvar();
-}
