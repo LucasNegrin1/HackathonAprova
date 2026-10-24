@@ -49,7 +49,7 @@ export default function Widget() {
 
   useEffect(() => {
     fim.current?.scrollIntoView({ behavior: "smooth" });
-  }, [bolhas, digitando]);
+  }, [bolhas, digitando, opcoes]);
 
   const encerrado = estado !== null && estado.status !== "em_atendimento";
 
@@ -111,7 +111,7 @@ export default function Widget() {
 
   return (
     <div className="flex h-dvh flex-col bg-white text-slate-900">
-      <header className="flex items-center gap-3 bg-emerald-700 px-4 py-3 text-white">
+      <header className="flex shrink-0 items-center gap-3 bg-emerald-700 px-4 py-3 text-white">
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-semibold">A</div>
         <div className="flex-1">
           <div className="text-sm font-semibold">Atendimento Aprova</div>
@@ -122,7 +122,7 @@ export default function Widget() {
         </button>
       </header>
 
-      <div className="flex flex-1 flex-col gap-2 overflow-y-auto bg-slate-50 p-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto bg-slate-50 p-3">
         {bolhas.map((b, i) => (
           <div key={i} className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm ${b.de === "usuario" ? "self-end bg-emerald-700 text-white" : "self-start bg-white shadow-sm ring-1 ring-slate-200"}`}>
             {b.imagem && <img src={b.imagem} alt="anexo" className="mb-1 max-h-40 rounded" />}
@@ -150,7 +150,7 @@ export default function Widget() {
 
       {/* Respostas rápidas sugeridas pelo fluxo (perfil, "resolveu?", confirmação). */}
       {!encerrado && opcoes.length > 0 && (
-        <div className="flex flex-wrap gap-2 border-t border-slate-100 px-3 pt-2">
+        <div className="flex max-h-40 shrink-0 flex-wrap gap-2 overflow-y-auto border-t border-slate-100 bg-white px-3 py-2">
           {opcoes.map((r) => (
             <button key={r} onClick={() => enviar(r)} disabled={digitando} className="rounded-full px-3 py-1 text-sm text-emerald-800 ring-1 ring-emerald-700 hover:bg-emerald-50 disabled:opacity-50">
               {r}
@@ -170,7 +170,7 @@ export default function Widget() {
           e.preventDefault();
           enviar();
         }}
-        className="flex items-center gap-2 border-t border-slate-200 p-2"
+        className="flex shrink-0 items-center gap-2 border-t border-slate-200 p-2"
       >
         <button type="button" onClick={() => arquivo.current?.click()} aria-label="Anexar imagem" className="px-2 text-lg text-slate-500" disabled={encerrado}>
           📎
@@ -188,7 +188,7 @@ export default function Widget() {
           Enviar
         </button>
       </form>
-      <p className="pb-2 text-center text-[11px] text-slate-400">Nunca envie senhas por aqui.</p>
+      <p className="shrink-0 pb-2 text-center text-[11px] text-slate-400">Nunca envie senhas por aqui.</p>
     </div>
   );
 }
