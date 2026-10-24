@@ -39,8 +39,10 @@ para ser lido em 10 segundos. O usuário aprova o texto antes de ele ir para o t
 
 - Use só o que está na descrição. **Não invente** telas, números, mensagens de erro, horários ou causas.
 - Organize em linhas curtas, cada uma com um rótulo, só quando houver a informação:
-  `O que acontece:`, `Onde:` (tela, módulo ou processo), `Mensagem de erro:`, `Desde quando:`,
-  `Quem é afetado:`, `O que já foi tentado:`.
+  `O que acontece:`, `Onde:`, `Mensagem de erro:`, `Desde quando:`, `Quem é afetado:`, `O que já foi tentado:`.
+- `Onde:` (tela, módulo ou etapa) **só** se o usuário escreveu qual é. Nunca deduza a tela pelo assunto:
+  se ele não disse, deixe de fora e coloque "Tela ou módulo onde o problema acontece" em `faltando`.
+  O código garante essa regra (`lib/fluxo.ts`).
 - Português claro, sem gírias e sem julgamentos. Mantenha números de processo, guias e protocolos exatamente como escritos.
 - Até 8 linhas.
 

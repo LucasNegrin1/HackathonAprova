@@ -1,8 +1,8 @@
-import { escolherOpcao, PERFIS, PRIORIDADES } from "./catalogo";
+import { escolherOpcao, normalizar, PERFIS, PRIORIDADES } from "./catalogo";
 import { classificarProblema } from "./interpretacao";
 import { listarContas, supabaseConfigurado } from "./supabase";
 import { abrirChamado, type ChamadoAberto } from "./tools";
-import type { Conversa } from "./types";
+import type { Conversa, EstadoFluxo } from "./types";
 
 // Roteiro fixo do bot, conduzido pelo código:
 //   nome → funcionário ou proponente → prefeitura (lista para funcionário; cidade para proponente)
@@ -118,6 +118,7 @@ async function sugerirTexto(conversa: Conversa): Promise<Resposta> {
   const perfil = conversa.perfil === "analista_prefeitura" ? "funcionário da prefeitura" : "proponente";
   d.classificacao = await classificarProblema(d.descricao!, perfil);
   if (!d.classificacao.textoSugerido) return registrar(conversa, d.descricao!);
+  exigirLocalDoUsuario(d.classificacao, d.descricao!);
 
   fluxo.etapa = "revisao";
   const falta = d.classificacao.faltando.length
@@ -130,6 +131,25 @@ async function sugerirTexto(conversa: Conversa): Promise<Resposta> {
     ],
     opcoes: OPCOES_REVISAO,
   };
+}
+
+// Palavras que indicam que o próprio usuário disse onde o problema acontece.
+const CITA_LOCAL = /\b(tela|modulo|menu|aba|pagina|botao|formulario|relatorio|campo|etapa|painel)\b/;
+const ITEM_LOCAL = "Tela ou módulo onde o problema acontece";
+
+/**
+ * Onde o problema acontece é o usuário quem informa: se ele não citou a tela, a linha "Onde:"
+ * sai do texto sugerido (o modelo tende a deduzir) e o item entra em primeiro no "ainda faltaria".
+ */
+function exigirLocalDoUsuario(c: NonNullable<EstadoFluxo["dados"]["classificacao"]>, descricao: string) {
+  if (CITA_LOCAL.test(normalizar(descricao))) return;
+  c.textoSugerido = c.textoSugerido!
+    .split("\n")
+    .filter((l) => !/^\s*[-•*]?\s*\**onde\**\s*:/i.test(l))
+    .join("\n")
+    .trim();
+  const outros = c.faltando.filter((f) => !/tela|m[oó]dulo|onde/i.test(f));
+  c.faltando = [ITEM_LOCAL, ...outros].slice(0, 3);
 }
 
 async function registrar(conversa: Conversa, descricao: string, relatoOriginal?: string): Promise<Resposta> {
