@@ -1,6 +1,6 @@
 export type Priority = 'P1' | 'P2' | 'P3' | 'P4';
 export type TicketStatus = 'Em Atendimento' | 'Aberto' | 'Aguardando Cliente' | 'Bloqueado' | 'Em Análise N3';
-export type RequestType = 'Incidente Crítico' | 'Falha de Sistema' | 'Requisição' | 'Dúvida Operacional' | 'Problema Conhecido';
+export type RequestType = 'Incidente Crítico' | 'Falha de Sistema' | 'Requisição' | 'Dúvida Operacional' | 'Problema Conhecido' | 'Melhoria/Nova Parametrização';
 
 export interface Ticket {
   id: string;

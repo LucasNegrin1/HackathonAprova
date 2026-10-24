@@ -15,7 +15,7 @@ export function supabase(): SupabaseClient {
   return cliente;
 }
 
-/** Conta do município informado no checklist; cria a conta se ainda não existir. */
+/** Conta pelo nome informado; cria a conta se ainda não existir. */
 async function contaDoMunicipio(municipio: string | undefined): Promise<string> {
   const nome = municipio && !/^n[aã]o sabe/i.test(municipio) ? municipio.trim() : "Conta não identificada";
   const { data: contas, error } = await supabase().from("contas").select("id, nome");
@@ -27,7 +27,7 @@ async function contaDoMunicipio(municipio: string | undefined): Promise<string> 
 
   const { data, error: erroInsert } = await supabase()
     .from("contas")
-    .insert({ nome: nome === "Conta não identificada" ? nome : `Prefeitura de ${nome}` })
+    .insert({ nome: nome === "Conta não identificada" || /^prefeitura/i.test(nome) ? nome : `Prefeitura de ${nome}` })
     .select("id")
     .single();
   if (erroInsert) throw erroInsert;
@@ -35,7 +35,7 @@ async function contaDoMunicipio(municipio: string | undefined): Promise<string> 
 }
 
 export interface NovoChamado {
-  municipio?: string;
+  conta?: string;
   requerente: string;
   canal: string;
   perfil: string;
@@ -69,7 +69,7 @@ export interface ResultadoChamado {
  * 3. senão, impacto × urgência sugeridos pelo bot → P1 a P4, respeitando a cota de P1 da conta.
  */
 export async function gravarChamadoSupabase(c: NovoChamado): Promise<ResultadoChamado> {
-  const contaId = await contaDoMunicipio(c.municipio);
+  const contaId = await contaDoMunicipio(c.conta);
   const { data, error } = await supabase()
     .from("chamados")
     .insert({
@@ -166,3 +166,11 @@ async function triar(id: string, c: NovoChamado, paiId: string | null) {
   // Se a triagem falhar, o chamado continua gravado como "aberto" e o erro fica no log.
   if (error) console.error("[supabase] triagem automática falhou", error);
 }
+
+/** Prefeituras para o usuário escolher. */
+export async function listarContas(): Promise<string[]> {
+  const { data, error } = await supabase().from("contas").select("nome").neq("nome", "Conta não identificada").order("nome");
+  if (error) throw error;
+  return data.map((c) => c.nome);
+}
+

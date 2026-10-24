@@ -48,8 +48,6 @@ export function novaConversa(canal: Canal, contato: string, perfil: Perfil): Con
     status: "em_atendimento",
     transcript: [],
     turnosUsuario: 0,
-    campos: {},
-    artigosSugeridos: [],
   };
   db.conversas[conversa.id] = conversa;
   return conversa;

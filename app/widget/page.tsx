@@ -10,9 +10,10 @@ type Imagem = { base64: string; mediaType: "image/jpeg" | "image/png" | "image/w
 interface Bolha { de: "usuario" | "agente"; texto: string; imagem?: string }
 interface Estado { id: string; status: string; ticketId: string | null }
 
+// Mesmo texto do roteiro (lib/fluxo.ts): o bot já começa pedindo o nome.
 const BOAS_VINDAS: Bolha = {
   de: "agente",
-  texto: "Olá! Sou o atendimento da plataforma Aprova. Me conte sua dúvida ou o que está acontecendo. Se tiver um print da tela, pode anexar no clipe.",
+  texto: "Olá! Sou o assistente de suporte PREFtech. Vou abrir um chamado para você.\nQual é o seu nome?",
 };
 
 function Texto({ texto }: { texto: string }) {
@@ -55,7 +56,7 @@ export default function Widget() {
   function novoAtendimento() {
     setEstado(null);
     setOpcoes([]);
-    setBolhas([{ de: "agente", texto: "Pode me contar a nova dúvida ou problema." }]);
+    setBolhas([BOAS_VINDAS]);
   }
 
   async function enviar(mensagem = texto) {
@@ -135,10 +136,9 @@ export default function Widget() {
               <>
                 <div className="text-xs text-slate-500">Protocolo do seu chamado</div>
                 <div className="font-mono text-lg font-semibold">{estado.ticketId}</div>
-                <div className="mt-1 text-xs text-slate-500">O retorno chega no e-mail informado.</div>
               </>
             ) : (
-              <div className="text-emerald-800">Resolvido sem precisar abrir chamado.</div>
+              <div className="text-slate-600">Atendimento encerrado sem abrir chamado.</div>
             )}
             <button onClick={novoAtendimento} className="mt-2 text-xs text-emerald-700 underline">
               Novo atendimento

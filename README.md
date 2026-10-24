@@ -22,23 +22,22 @@ npm run dev
 
 Abra `http://localhost:3000`. Sem chave de modelo, o bot roda em **modo demonstração** (roteiro fixo, com as mesmas regras). Sem Supabase, o painel mostra os dados de exemplo.
 
-## Bot: do problema ao ticket
+## Bot: roteiro do chamado
 
-1. O usuário abre o chat e escreve, **sem identificação prévia**.
-2. O bot busca na base de conhecimento (`data/base-conhecimento.json`). Se resolver, encerra sem ticket.
-3. Se não resolver, classifica a categoria e pergunta **só o que falta** do checklist (`data/categorias.json`), até duas perguntas por vez. Todo chamado tem **impacto** e **prazo**. Nome e e-mail para retorno ficam no fim.
-4. Mostra o resumo, espera o "sim" e cria o ticket no Supabase.
-5. O ticket é **triado na hora pelas regras do banco**, com o impacto × urgência sugerido pelo agente:
-   - P1–P4 pela matriz de prioridade;
-   - sugestão ou nova parametrização vai para o backlog de produto;
-   - se a conta já estiver na cota de P1, o ticket entra como P1 e aparece em **Revisão do gestor**.
+Roteiro fixo, conduzido pelo código (`lib/fluxo.ts`):
 
-O prompt do bot é o [`INSTRUCTIONS.md`](INSTRUCTIONS.md). O código (`lib/tools.ts`, `lib/agent.ts`) garante o que não pode depender do modelo:
+1. **Nome.**
+2. **Prefeitura**, com botões vindos do Supabase. Com `data-conta` no widget, esta etapa é pulada.
+3. **Funcionário da prefeitura ou proponente**, com botões.
+4. **Descrição do problema**, em texto livre. Com menos de 12 palavras, o bot pede "me conte mais" uma vez e junta os dois textos.
+5. O modelo lê a descrição e define o **título** e a **prioridade**. Sem modelo, valem palavras-chave (`lib/catalogo.ts`):
+   - **P1 Crítico:** mexer na hora (operação parada);
+   - **P2 Alto:** precisa de atenção logo;
+   - **P3 Médio;**
+   - **P4 Solicitação nova** no sistema.
+6. O ticket é **registrado na hora** no Supabase e passa pelas regras do banco: parecido com chamado aberto → vinculado ao pai; cota de P1 por prefeitura → revisão do gestor. O bot mostra número, título e prioridade, e o painel exibe o ticket novo na hora.
 
-- só abre ticket com checklist completo e um "sim" do usuário na última mensagem;
-- "não sabe" só é aceito se o usuário disse que não sabe;
-- número de processo (ex.: `133-26-PMB-CGR`), e-mail e CPF escritos pelo usuário entram no checklist sozinhos;
-- protocolo e prazo da confirmação vêm do banco. Texto que cita um protocolo inexistente ou sai quebrado é descartado, e o código mostra o resumo ou a próxima pergunta.
+O prompt do modelo é o [`INSTRUCTIONS.md`](INSTRUCTIONS.md), com a definição de cada prioridade.
 
 **Modelo:** usa o primeiro provedor com chave: `XAI_API_KEY` (Grok), `GROQ_API_KEY` (Groq, `openai/gpt-oss-120b`, com `gpt-oss-20b` e `qwen3.8-27b` de reserva quando estoura o limite gratuito) ou `ANTHROPIC_API_KEY` (Claude).
 

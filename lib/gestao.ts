@@ -1,6 +1,5 @@
 import type { Priority, RequestType, TeamMember, Ticket, TicketStatus } from "@/app/(preftech)/data/mockSupportData";
 import { MOCK_TEAM_MEMBERS } from "@/app/(preftech)/data/mockSupportData";
-import { categoriaPorId } from "./catalogo";
 import { supabase } from "./supabase";
 
 // Dados reais do Supabase no formato do painel gerencial PrefTech (app/gestao).
@@ -33,6 +32,7 @@ interface Linha {
   descricao: string | null;
   categoria: string | null;
   canal: string;
+  campos: Record<string, string> | null;
   tipo: string | null;
   status: string;
   prioridade: Priority | null;
@@ -78,10 +78,10 @@ function paraTicket(c: Linha, agora: number): Ticket {
     number: c.protocolo,
     title: c.titulo,
     account: c.contas?.nome ?? "Conta não identificada",
-    // Tickets do bot guardam o id da categoria do checklist; os importados, o assunto da planilha.
-    category: categoriaPorId(c.categoria ?? undefined)?.nome ?? c.categoria ?? "Sem categoria",
+    category: c.categoria ?? "Sem categoria",
     priority: prioridade,
-    requestType: tipoDeSolicitacao(c.tipo, prioridade),
+    // Tickets do bot guardam o tipo escolhido no menu; os importados derivam do tipo da triagem.
+    requestType: (c.campos?.tipo_solicitacao as RequestType | undefined) ?? tipoDeSolicitacao(c.tipo, prioridade),
     createdAt: new Date(c.criado_em).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).replace(",", ""),
     firstAction: (c.descricao ?? "Sem descrição na abertura.").slice(0, 280),
     status: STATUS[c.status] ?? "Aberto",
@@ -113,7 +113,7 @@ export async function dadosGestao(): Promise<{ tickets: Ticket[]; members: TeamM
   const { data, error } = await supabase()
     .from("chamados")
     .select(
-      "id, protocolo, titulo, descricao, categoria, canal, tipo, status, prioridade, impacto_efetivo, urgencia, responsavel, volume_grupo, justificativa_p1, motivo_ajuste, escalado_em, criado_em, ultima_movimentacao_em, contas(nome), pai:chamado_pai_id(protocolo)",
+      "id, protocolo, titulo, descricao, categoria, canal, campos, tipo, status, prioridade, impacto_efetivo, urgencia, responsavel, volume_grupo, justificativa_p1, motivo_ajuste, escalado_em, criado_em, ultima_movimentacao_em, contas(nome), pai:chamado_pai_id(protocolo)",
     )
     .in("status", ["aberto", "na_fila", "em_atendimento", "aguardando_cliente", "vinculado", "backlog_produto"]);
   if (error) throw error;
