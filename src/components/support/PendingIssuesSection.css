@@ -1,0 +1,130 @@
+.pending-section-wrap {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-card);
+}
+
+.pending-section-header {
+  margin-bottom: 14px;
+}
+
+.pending-main-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.pending-main-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.pending-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 1200px) {
+  .pending-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .pending-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pending-mini-card {
+  background-color: var(--bg-surface-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+}
+
+.pending-mini-card:hover {
+  background-color: #ffffff;
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.pending-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.pending-icon-box {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.waiting-box { background-color: #f1f5f9; color: #475569; }
+.blocked-box { background-color: var(--critical-bg); color: var(--critical-text); }
+.backlog-box { background-color: #f0fdf4; color: #166534; }
+.linked-box { background-color: #f5f3ff; color: #6d28d9; }
+.review-box { background-color: #fff1f2; color: #e11d48; }
+
+.blocked-card {
+  border-left: 3px solid var(--critical-text);
+}
+
+.review-card {
+  border-left: 3px solid #e11d48;
+  background-color: #fffafb;
+}
+
+.pending-count {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.pending-card-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.pending-card-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin-bottom: 10px;
+  flex: 1;
+}
+
+.pending-card-footer {
+  padding-top: 6px;
+  border-top: 1px solid var(--border-light);
+}
+
+.pending-action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+
+.pending-mini-card:hover .pending-action-link {
+  text-decoration: underline;
+}

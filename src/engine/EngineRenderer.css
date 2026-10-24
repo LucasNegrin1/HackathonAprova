@@ -1,0 +1,134 @@
+.engine-canvas {
+  width: 100%;
+  padding-bottom: 40px;
+}
+
+.canvas-nodes-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.engine-node-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transition-fast);
+}
+
+.engine-node-wrapper.width-full {
+  flex: 0 0 100%;
+  width: 100%;
+}
+
+.engine-node-wrapper.width-half {
+  flex: 0 0 calc(50% - 10px);
+  width: calc(50% - 10px);
+}
+
+.engine-node-wrapper.width-third {
+  flex: 0 0 calc(33.333% - 13.4px);
+  width: calc(33.333% - 13.4px);
+}
+
+@media (max-width: 900px) {
+  .engine-node-wrapper.width-half,
+  .engine-node-wrapper.width-third {
+    flex: 0 0 100%;
+    width: 100%;
+  }
+}
+
+.node-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  margin-bottom: 6px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.engine-node-wrapper:hover .node-control-bar {
+  opacity: 1;
+}
+
+.node-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.node-category-pill {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-dim);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.node-id {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.node-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tool-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.tool-btn:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  color: var(--text-white);
+  border-color: var(--border-medium);
+}
+
+.tool-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.tool-btn-danger:hover {
+  background: rgba(244, 63, 94, 0.15) !important;
+  color: var(--accent-rose) !important;
+  border-color: rgba(244, 63, 94, 0.3) !important;
+}
+
+.node-component-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.error-node {
+  background: rgba(244, 63, 94, 0.1);
+  border: 1px dashed var(--accent-rose);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--accent-rose);
+}
+
+.text-rose {
+  color: var(--accent-rose);
+}
